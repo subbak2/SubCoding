@@ -7,4 +7,4 @@ Thank you in advance.
 
 ### Python
 ##### Index
-   [1) Python 설치하기](https://github.com/subbak2/TIL/tree/master/1903/190328) <- 클릭
+   [1) Python 설치하기](https://github.com/subbak2/SubCoding/blob/master/1)%20Python%20%EC%84%A4%EC%B9%98%ED%95%98%EA%B8%B0.md) <- 클릭
