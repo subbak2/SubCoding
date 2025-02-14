@@ -8,8 +8,7 @@ def transcribe_audio(audio_path, output_srt):
     model = whisper.load_model("small")  # "small" "medium" "large" 순으로 정확도 상승, 시간 오래 걸림
     result = model.transcribe(audio_path, language="ko")  # 명시적으로 한국어 설정 가능
   
-    print(type(result))
-    print(result)
+    # print(result)
 
     with open(output_srt, "w", encoding="utf-8") as f:
         for i, segment in enumerate(result["segments"]):

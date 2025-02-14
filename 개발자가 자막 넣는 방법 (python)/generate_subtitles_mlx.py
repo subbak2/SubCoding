@@ -5,7 +5,7 @@ def transcribe_audio(audio_path, output_srt):
     result = mlx_whisper.transcribe(audio_path, language="ko", path_or_hf_repo="mlx-community/whisper-medium-mlx-8bit")  # whisper-large-v3-mlx, whisper-medium-mlx-8bit 추천
     # model 목록 참고 https://huggingface.co/collections/mlx-community/whisper-663256f9964fbb1177db93dc
   
-    print(result)
+    # print(result)
 
     with open(output_srt, "w", encoding="utf-8") as f:
         for i, segment in enumerate(result["segments"]):

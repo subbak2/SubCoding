@@ -4,8 +4,8 @@
 If you have any questions or feedback, please email subbak2@gmail.com 
 <hr/>
 
-### 개발자가 자막 넣는 방법 (python)
-
+## 최신 영상
+[개발자가 자막 넣는 방법 (python)](https://github.com/subbak2/SubCoding/tree/master/%EA%B0%9C%EB%B0%9C%EC%9E%90%EA%B0%80%20%EC%9E%90%EB%A7%89%20%EB%84%A3%EB%8A%94%20%EB%B0%A9%EB%B2%95%20(python))
 
 
 <hr/>

@@ -10,6 +10,6 @@ def extract_audio(video_path, audio_output):
 # 여기에 변환할 비디오 파일의 이름을 바꿔주세요 
 video_file = "개발자를 위한 최고의 장난감 NAS.mov"
 
-audio_file = "aduio/extracted_audio.wav"
+audio_file = "auio/extracted_audio.wav"
 
 extract_audio(video_file, audio_file)
