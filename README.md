@@ -1,8 +1,13 @@
 # SubCoding
 ## SubCoding 실습 문서입니다.
 
-If you have any questions or feedbacks, please mail at subbak2@likelion.org. 
-Thank you in advance.
+If you have any questions or feedback, please email subbak2@gmail.com 
+<hr/>
+
+### 개발자가 자막 넣는 방법 (python)
+
+
+
 <hr/>
 
 ### 코딩재밌게 시작해보기
