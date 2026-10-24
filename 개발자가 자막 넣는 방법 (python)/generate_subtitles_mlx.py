@@ -1,29 +1,25 @@
-import mlx_whisper
-# pip install mlx mlx-whisper
+"""Apple Silicon Mac GPU(MLX)로 자막을 만든다. CPU보다 몇 배 빠르다.
 
-def transcribe_audio(audio_path, output_srt):
-    result = mlx_whisper.transcribe(audio_path, language="ko", path_or_hf_repo="mlx-community/whisper-medium-mlx-8bit")  # whisper-large-v3-mlx, whisper-medium-mlx-8bit 추천
-    # model 목록 참고 https://huggingface.co/collections/mlx-community/whisper-663256f9964fbb1177db93dc
-  
-    # print(result)
+설치: pip install mlx mlx-whisper
+사용법:
+    python ./generate_subtitles_mlx.py
+    python ./generate_subtitles_mlx.py --model mlx-community/whisper-medium-mlx-8bit
+모델 목록: https://huggingface.co/collections/mlx-community/whisper-663256f9964fbb1177db93dc
+(whisper-large-v3-mlx, whisper-medium-mlx-8bit 추천)
+"""
+from generate_subtitles import LANGUAGE, parse_args, write_srt
 
-    with open(output_srt, "w", encoding="utf-8") as f:
-        for i, segment in enumerate(result["segments"]):
-            start = segment["start"]
-            end = segment["end"]
-            text = segment["text"]
+DEFAULT_MODEL = "mlx-community/whisper-large-mlx-8bit"
 
-            f.write(f"{i+1}\n")
-            f.write(f"{format_time(start)} --> {format_time(end)}\n")
-            f.write(f"{text}\n\n")
 
-def format_time(seconds):
-    h = int(seconds // 3600)
-    m = int((seconds % 3600) // 60)
-    s = int(seconds % 60)
-    ms = int((seconds % 1) * 1000)
-    return f"{h:02}:{m:02}:{s:02},{ms:03}"
+def transcribe_audio(audio_path, output_srt, model=DEFAULT_MODEL):
+    import mlx_whisper
 
-audio_file = "audio/extracted_audio.wav"
-output_srt = "subtitles/output_korean_subtitles.srt"
-transcribe_audio(audio_file, output_srt)
+    result = mlx_whisper.transcribe(str(audio_path), language=LANGUAGE, path_or_hf_repo=model)
+    write_srt(result["segments"], output_srt)
+
+
+if __name__ == "__main__":
+    args = parse_args(default_model=DEFAULT_MODEL)
+    transcribe_audio(args.input, args.output, args.model)
+    print(f"저장했습니다: {args.output}")

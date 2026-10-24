@@ -1,92 +1,83 @@
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+
+/**
+ * LeetCode #1 Two Sum — https://leetcode.com/problems/two-sum
+ *
+ * 문제 조건:
+ * - 정수 배열 nums, 목표 정수 target
+ * - nums에서 두 수를 더해 target이 되는 조합이 정확히 1개 있다. 두 수의 위치(인덱스)를 출력
+ *
+ * 제약 조건:
+ * - 2 <= nums.length <= 10^4      → N^2도 시간 안에 통과
+ * - -10^9 <= nums[i], target <= 10^9 → 두 수의 합도 int 범위 안 (long 불필요)
+ *
+ * 해결 순서 (LeetCode 실행 시간):
+ * 1. 처음에는 다 해보자 (이중 for문, N^2)                → 90ms   {@link #twoSumBruteForce}
+ * 2. HashMap에 전부 넣고, 한 번 더 돌며 짝을 찾기 (2N)   → 12ms   {@link #twoSumTwoPass}
+ * 3. HashMap에 넣으면서 바로 짝을 찾기 (N, 최종 제출)    → 1~6ms  {@link #twoSum}
+ *
+ * LeetCode에는 twoSum이 있는 Solution 클래스만 제출하면 된다.
+ * 직접 실행: javac LeetCode_No1_TwoSum.java && java -cp . Solution
+ */
 class Solution {
+
+    /**
+     * 최종 제출 코드: 앞에서부터 보면서
+     * 1) 짝(target - 지금 수)이 이미 HashMap에 있으면 정답. HashMap에 있는 쪽이 먼저 나온 수라서 순서를 바꿔 출력
+     * 2) 없으면 지금 수를 HashMap에 넣는다 (key: 값, value: 인덱스)
+     */
     public int[] twoSum(int[] nums, int target) {
-
-        /* url : https://leetcode.com/problems/two-sum 
-        */
-
-        /*    최종 제출코드   */
-
-        /* HashMap에 넣으면서 값을 구해보기   
-           1) N번 돌면서 값을 찾아보기
-               1-1) 답 출력할때 순서 거꾸로 하기 (HashMap에 있다는 얘기는 값이 이미 들어갔다 -> 먼저 나옴)
-           2) 답이 아니면 HashMap에 넣기(put)
-       */
-
-        Map<Integer, Integer> hashMap = new HashMap<>();
-        for (int i = 0; i<nums.length; i++){
-            int ans = target - nums[i];
-            if (hashMap.containsKey(ans)){
-                return new int[] {hashMap.get(ans), i};
+        Map<Integer, Integer> seen = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            int partner = target - nums[i];
+            Integer partnerIndex = seen.get(partner);
+            if (partnerIndex != null) {
+                return new int[] {partnerIndex, i};
             }
-            hashMap.put(nums[i],i);
+            seen.put(nums[i], i);
         }
-        
         throw new IllegalArgumentException("No Answer");
+    }
 
-        /*    최종 제출코드  끝 */
-
-
-       /*    풀이 과정   */
-        /*
-        문제 조건 : 
-        - 정수 배열 nums
-        - 목표 정수 target
-        - nums에서 정수 2개를 더해서 target 이 되는 값 1개 존재
-          2개의 배열에서의 위치를 출력하라
-          
-        제약 조건 : 
-        2 <= nums.length <= 10^4      시간 : N^2해도 충분
-        -10^9 <= nums[i] <= 10^9      long말고 int로 충분
-        -10^9 <= target <= 10^9
-        
-        해결 순서 :
-        1. 처음에는 다 해보자  -> N^2 방법 -> 90ms
-        
-        2. HashMap에 
-           1) N번 돌면서 데이터 전부 넣고
-           2) N번 돌면서 값을 빠르게 찾기 -> 12ms 
-           
-        3. HashMap에 넣으면서 값을 구해보기   -> 1~6 ms
-           1) N번 돌면서 값을 찾아보기
-           2) 답이 아니면 HashMap에 넣기(put)
-           3) 답 출력할때 순서 거꾸로 하기 (HashMap에 있다는 얘기는 값이 이미 들어갔다 -> 먼저 나옴)
-
-       1. 처음에는 다 해보자  
-        // 앞에서 부터 끝까지 다 보겠다
-        for (int i = 0; i < nums.length; i++){
-            // 그 수 뒤에 있는 수 전부 보겠다
-            for (int j = i+1; j < nums.length; j++){
-                // 두 수의 합이 target이면 정답 
-                if (nums[i] + nums[j] == target){
+    /** 1. 처음에는 다 해보자: 모든 두 수 조합을 확인 (N^2) */
+    public int[] twoSumBruteForce(int[] nums, int target) {
+        for (int i = 0; i < nums.length; i++) {          // 앞에서부터 끝까지
+            for (int j = i + 1; j < nums.length; j++) {  // 그 수 뒤에 있는 수 전부
+                if (nums[i] + nums[j] == target) {
                     return new int[] {i, j};
                 }
             }
         }
-
-
-        2. HashMap에서 N*2번 돌기
-        Map<Integer, Integer> hashMap = new HashMap<Integer, Integer>();
-        
-        // 1) HashMap에 nums 배열 넣기
-        for (int i = 0; i<nums.length; i++){
-            // key : 값 , value : index
-            hashMap.put(nums[i],i);
-        }
-        
-        // 2) HashMap에서 빠르게 값 찾기
-        for (int i = 0; i<nums.length; i++){
-            
-            // 2-1) 예외조건 인덱스가 같은 경우는 예외 처리
-            int ans = target - nums[i];
-            if (hashMap.containsKey(ans) 
-                && i != hashMap.get(ans) ){
-                return new int[] {i, hashMap.get(ans)};
-            }
-            
-        }
-        */
-
-
+        throw new IllegalArgumentException("No Answer");
     }
 
+    /** 2. HashMap에 전부 넣은 뒤, 한 번 더 돌며 짝을 찾기 (2N) */
+    public int[] twoSumTwoPass(int[] nums, int target) {
+        Map<Integer, Integer> indexOf = new HashMap<>();
+        for (int i = 0; i < nums.length; i++) {
+            indexOf.put(nums[i], i);
+        }
+        for (int i = 0; i < nums.length; i++) {
+            Integer partnerIndex = indexOf.get(target - nums[i]);
+            if (partnerIndex != null && partnerIndex != i) {  // 같은 수를 두 번 쓰는 경우는 제외
+                return new int[] {i, partnerIndex};
+            }
+        }
+        throw new IllegalArgumentException("No Answer");
+    }
+
+    public static void main(String[] args) {
+        Solution s = new Solution();
+        int[][] nums = {{2, 7, 11, 15}, {3, 2, 4}, {3, 3}};
+        int[] targets = {9, 6, 6};
+        for (int t = 0; t < nums.length; t++) {
+            System.out.printf("%s, target %d -> %s / %s / %s%n",
+                    Arrays.toString(nums[t]), targets[t],
+                    Arrays.toString(s.twoSum(nums[t], targets[t])),
+                    Arrays.toString(s.twoSumBruteForce(nums[t], targets[t])),
+                    Arrays.toString(s.twoSumTwoPass(nums[t], targets[t])));
+        }
+    }
 }

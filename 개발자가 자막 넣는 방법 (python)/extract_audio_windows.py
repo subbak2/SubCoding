@@ -1,15 +1,16 @@
-import subprocess
+"""Windows용 오디오 추출. ffmpeg.exe 위치만 다르고 나머지는 extract_audio.py와 같다.
 
-# "C:\\Util\\ffmpeg-7.1-essentials_build\\bin\\ffmpeg.exe" 부분을 ffmpeg를 실제 압축 푼 경로로 변경해주세요
-def extract_audio(video_path, audio_output):
-    command = [
-        "C:\\Util\\ffmpeg-7.1-essentials_build\\bin\\ffmpeg.exe", "-i", video_path, "-q:a", "0", "-map", "a", "-ac", "1", "-ar", "16000", audio_output
-    ]
-    subprocess.run(command, check=True)
+사용법:
+    python ./extract_audio_windows.py
+    python ./extract_audio_windows.py "내 영상.mov" -o audio/my.wav
+"""
+from extract_audio import extract_audio, parse_args
 
-# 여기에 변환할 비디오 파일의 이름을 바꿔주세요 
-video_file = "개발자를 위한 최고의 장난감 NAS.mov"
+# ffmpeg를 실제로 압축 푼 경로로 바꿔주세요 (README의 주의사항 참고)
+FFMPEG_EXE = r"C:\Util\ffmpeg-7.1-essentials_build\bin\ffmpeg.exe"
 
-audio_file = "auio/extracted_audio.wav"
 
-extract_audio(video_file, audio_file)
+if __name__ == "__main__":
+    args = parse_args()
+    extract_audio(args.video, args.output, ffmpeg=FFMPEG_EXE)
+    print(f"저장했습니다: {args.output}")

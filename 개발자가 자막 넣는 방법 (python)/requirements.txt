@@ -1,1 +1,4 @@
 openai-whisper
+# Apple Silicon Mac에서 GPU(MLX)로 돌리려면 아래 두 개도 설치 (generate_subtitles_mlx.py)
+# mlx
+# mlx-whisper

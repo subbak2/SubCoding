@@ -1,32 +1,19 @@
-import whisper
+"""Windows용 자막 생성. Whisper가 ffmpeg를 찾도록 PATH에 ffmpeg 폴더를 더하고, 기본 모델은 small.
 
-# "C:\\Util\\ffmpeg-7.1-essentials_build\\bin\\ffmpeg.exe" 부분을 ffmpeg를 실제 압축 푼 경로로 변경해주세요
+사용법:
+    python ./generate_subtitles_windows.py
+    python ./generate_subtitles_windows.py --model medium
+"""
 import os
-os.environ["PATH"] += os.pathsep + r"C:\\Util\\ffmpeg-7.1-essentials_build\\bin"
 
-def transcribe_audio(audio_path, output_srt):
-    model = whisper.load_model("small")  # "small" "medium" "large" 순으로 정확도 상승, 시간 오래 걸림
-    result = model.transcribe(audio_path, language="ko")  # 명시적으로 한국어 설정 가능
-  
-    # print(result)
+from generate_subtitles import parse_args, transcribe_audio
 
-    with open(output_srt, "w", encoding="utf-8") as f:
-        for i, segment in enumerate(result["segments"]):
-            start = segment["start"]
-            end = segment["end"]
-            text = segment["text"]
+# ffmpeg를 실제로 압축 푼 경로의 bin 폴더로 바꿔주세요 (README의 주의사항 참고)
+FFMPEG_DIR = r"C:\Util\ffmpeg-7.1-essentials_build\bin"
 
-            f.write(f"{i+1}\n")
-            f.write(f"{format_time(start)} --> {format_time(end)}\n")
-            f.write(f"{text}\n\n")
 
-def format_time(seconds):
-    h = int(seconds // 3600)
-    m = int((seconds % 3600) // 60)
-    s = int(seconds % 60)
-    ms = int((seconds % 1) * 1000)
-    return f"{h:02}:{m:02}:{s:02},{ms:03}"
-
-audio_file = "audio/extracted_audio.wav"
-output_srt = "subtitles/output_korean_subtitles.srt"
-transcribe_audio(audio_file, output_srt)
+if __name__ == "__main__":
+    os.environ["PATH"] += os.pathsep + FFMPEG_DIR
+    args = parse_args(default_model="small")
+    transcribe_audio(args.input, args.output, args.model)
+    print(f"저장했습니다: {args.output}")
