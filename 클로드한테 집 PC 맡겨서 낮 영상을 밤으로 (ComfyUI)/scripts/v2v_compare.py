@@ -25,7 +25,7 @@ from PIL import Image, ImageDraw, ImageFont
 
 
 def run(args):
-    return subprocess.run(args, check=True, capture_output=True, text=True).stdout
+    return subprocess.run(args, check=True, capture_output=True, text=True, encoding="utf-8", errors="replace").stdout  # Windows 기본 cp949로 읽으면 한글 경로에서 오류
 
 
 def probe(path):
@@ -95,7 +95,7 @@ def prepare(args):
                     reference=spec, sha256=hashlib.sha256(clip.read_bytes()).hexdigest(),
                     control="FFmpeg Canny, low=0.08 high=0.20, lossy H264 preview/control",
                     artifacts=["reference.mp4", "control_canny.mp4", "first.png", "middle.png", "last.png"])
-    (out / "manifest.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n")
+    (out / "manifest.json").write_text(json.dumps(metadata, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(metadata, ensure_ascii=False, indent=2))
 
 
@@ -140,7 +140,7 @@ def compare(args):
                   reference_spec=left, result_spec=right, comparison_spec=rendered,
                   alignment="frame n left versus frame n right; no temporal correction",
                   semantic_alignment="Not guaranteed: inspect landmarks and motion visually")
-    out.with_suffix(".json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n")
+    out.with_suffix(".json").write_text(json.dumps(report, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
     print(json.dumps(report, ensure_ascii=False, indent=2))
 
 

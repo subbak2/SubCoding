@@ -153,7 +153,7 @@ def main():
     while True:
         try:  # nvidia-smi가 없는 PC(다른 컴퓨터에서 --host로 제출)면 GPU 메모리는 0으로 남김
             smi = subprocess.run(['nvidia-smi', '--query-gpu=memory.used', '--format=csv,noheader,nounits'],
-                                 capture_output=True, text=True)
+                                 capture_output=True, text=True, encoding="utf-8", errors="replace")
             if smi.returncode == 0 and smi.stdout.split():
                 peak_gpu = max(peak_gpu, int(smi.stdout.split()[0]))
         except (FileNotFoundError, ValueError):

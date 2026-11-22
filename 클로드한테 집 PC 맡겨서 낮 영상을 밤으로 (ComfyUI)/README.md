@@ -9,6 +9,8 @@
 
 이 폴더를 통째로 받아서 **Claude Code에게 넘기고 [START_HERE.md](START_HERE.md)에 있는 한 줄을 말하면** 설치부터 실행까지 Claude가 진행합니다. 아래 내용은 Claude가 읽는 설명서이기도 합니다.
 
+**실제로 시험해 봤습니다 (2026-11-22):** 이 저장소를 새로 clone하고, 아무 설정 없는 새 Claude Code 세션에 START_HERE의 한 줄과 영상만 줬습니다. 사람이 한 일은 ChatGPT로 밤 사진 한 장 만든 것뿐이었고, 49·81프레임 생성까지 끝났습니다 (전체 약 53분, 그중 생성 6분 18초). 단, ComfyUI와 모델이 이미 설치된 PC였고 새 PC 설치부터 검증한 것은 아닙니다.
+
 필요한 것
 
 | | |
@@ -113,6 +115,12 @@ python scripts/vace_v2v.py --name my_night \
 ### API 그래프를 직접 쓸 때
 
 `workflows/first_frame_lock_api.json`은 ComfyUI API 그래프입니다. 스크립트 없이 쓰려면 ComfyUI `input/`에 `control_canny.mp4`, `night_first_frame.png`, `mask.mp4`를 넣고, 그래프를 `{"prompt": 그래프}`로 감싸 `/prompt`에 POST합니다. `mask.mp4`는 832×480·16fps·81프레임이고 첫 프레임 전체가 검정, 나머지는 흰색이어야 합니다. `scripts/vace_v2v.py`는 마스크 생성과 업로드를 자동으로 합니다.
+
+## 문제 해결
+
+- **Windows에서 `UnicodeDecodeError`(cp949)**: 폴더 경로에 한글이 있을 때 났던 문제로, 2026-11-22에 스크립트를 UTF-8로 고정해 고쳤습니다. 예전 버전을 쓰고 있다면 최신으로 받거나 `set PYTHONUTF8=1` 뒤에 실행하세요.
+- **결과가 네온 윤곽처럼 빛남**: strength를 0.8 → 0.6으로 낮춥니다. 건물이 바뀌기 시작하면 다시 올립니다.
+- **중간에 달이 생김**: 네거티브를 `prompts/v2v_negative_nomoon.txt`로 바꿔 봅니다.
 
 ## 라이선스
 
