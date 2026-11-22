@@ -1,0 +1,228 @@
+{
+ "1": {
+  "class_type": "UNETLoader",
+  "inputs": {
+   "unet_name": "wan2.1_vace_1.3B_fp16.safetensors",
+   "weight_dtype": "default"
+  }
+ },
+ "2": {
+  "class_type": "ModelSamplingSD3",
+  "inputs": {
+   "shift": 8.0,
+   "model": [
+    "1",
+    0
+   ]
+  }
+ },
+ "3": {
+  "class_type": "CLIPLoader",
+  "inputs": {
+   "clip_name": "umt5_xxl_fp8_e4m3fn_scaled.safetensors",
+   "type": "wan",
+   "device": "default"
+  }
+ },
+ "4": {
+  "class_type": "VAELoader",
+  "inputs": {
+   "vae_name": "wan_2.1_vae.safetensors"
+  }
+ },
+ "5": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "Photorealistic aerial drone footage moving slowly over wide rice paddies at night. The upper half of the frame is a deep navy night sky with natural thin clouds, a few faint stars and a soft cool glow near the horizon. Dark mountain ridges extend across the left horizon and a low wooded hill rises on the right. Below are broad dark green rectangular rice fields, a diagonal farm road from the left, a paved road curving across the bottom toward the right, the cropped blue-roofed shed at bottom left and the small shed at right. Preserve every existing building, utility pole, field boundary and road in its original position. Natural restrained night exposure with readable field texture, realistic colors, no bright outlines. Match the first frame and preserve the source camera movement. Consistent lighting across all frames. One continuous shot.",
+   "clip": [
+    "3",
+    0
+   ]
+  }
+ },
+ "6": {
+  "class_type": "CLIPTextEncode",
+  "inputs": {
+   "text": "daylight, sunset orange, overexposure, crushed black shadows, warped roads, bending river banks, changing field boundaries, morphing buildings, added structures, added people, added vehicles, exposure flicker, camera shake, scene cuts, neon outlines, giant glowing spheres, aurora, cartoon, illustration, text, logo, watermark",
+   "clip": [
+    "3",
+    0
+   ]
+  }
+ },
+ "10": {
+  "class_type": "LoadVideo",
+  "inputs": {
+   "file": "control_canny.mp4"
+  }
+ },
+ "11": {
+  "class_type": "GetVideoComponents",
+  "inputs": {
+   "video": [
+    "10",
+    0
+   ]
+  }
+ },
+ "12": {
+  "class_type": "LoadImage",
+  "inputs": {
+   "image": "night_first_frame.png"
+  }
+ },
+ "13": {
+  "class_type": "ImageFromBatch",
+  "inputs": {
+   "image": [
+    "11",
+    0
+   ],
+   "batch_index": 1,
+   "length": 80
+  }
+ },
+ "14": {
+  "class_type": "ImageBatch",
+  "inputs": {
+   "image1": [
+    "12",
+    0
+   ],
+   "image2": [
+    "13",
+    0
+   ]
+  }
+ },
+ "15": {
+  "class_type": "LoadVideo",
+  "inputs": {
+   "file": "mask.mp4"
+  }
+ },
+ "16": {
+  "class_type": "GetVideoComponents",
+  "inputs": {
+   "video": [
+    "15",
+    0
+   ]
+  }
+ },
+ "17": {
+  "class_type": "ImageToMask",
+  "inputs": {
+   "image": [
+    "16",
+    0
+   ],
+   "channel": "red"
+  }
+ },
+ "20": {
+  "class_type": "WanVaceToVideo",
+  "inputs": {
+   "width": 832,
+   "height": 480,
+   "length": 81,
+   "batch_size": 1,
+   "strength": 0.8,
+   "positive": [
+    "5",
+    0
+   ],
+   "negative": [
+    "6",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ],
+   "control_video": [
+    "14",
+    0
+   ],
+   "control_masks": [
+    "17",
+    0
+   ]
+  }
+ },
+ "30": {
+  "class_type": "KSampler",
+  "inputs": {
+   "seed": 42,
+   "steps": 20,
+   "cfg": 6.0,
+   "sampler_name": "uni_pc",
+   "scheduler": "simple",
+   "denoise": 1.0,
+   "model": [
+    "2",
+    0
+   ],
+   "positive": [
+    "20",
+    0
+   ],
+   "negative": [
+    "20",
+    1
+   ],
+   "latent_image": [
+    "20",
+    2
+   ]
+  }
+ },
+ "31": {
+  "class_type": "TrimVideoLatent",
+  "inputs": {
+   "samples": [
+    "30",
+    0
+   ],
+   "trim_amount": [
+    "20",
+    3
+   ]
+  }
+ },
+ "32": {
+  "class_type": "VAEDecode",
+  "inputs": {
+   "samples": [
+    "31",
+    0
+   ],
+   "vae": [
+    "4",
+    0
+   ]
+  }
+ },
+ "33": {
+  "class_type": "CreateVideo",
+  "inputs": {
+   "images": [
+    "32",
+    0
+   ],
+   "fps": 16
+  }
+ },
+ "34": {
+  "class_type": "SaveVideo",
+  "inputs": {
+   "video": [
+    "33",
+    0
+   ],
+   "filename_prefix": "drone_night/first_frame_lock",
+   "format": "auto",
+   "format.codec": "auto"
+  }
+ }
+}
