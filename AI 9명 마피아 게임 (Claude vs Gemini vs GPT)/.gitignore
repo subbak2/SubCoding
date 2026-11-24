@@ -1,0 +1,5 @@
+runs/*
+!runs/game1/
+viewer/data/
+players.json
+__pycache__/

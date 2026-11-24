@@ -1,0 +1,948 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>AI Mafia Viewer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Anton&family=JetBrains+Mono:wght@500;700&family=Noto+Sans+KR:wght@500;700;900&display=block" rel="stylesheet">
+<script>
+  // Usage: index.html?run=test&scene=game&lang=en   scenes: intro_cast, game, arch, awards
+  // Preview options: &t=start second &speed=playback rate &roles=0 (hide role badges)
+  // Frame-by-frame rendering: add &render=1 (no realtime loop), then call window.seek(t) per frame;
+  // window.sceneInfo() lists scenes and their lengths.
+  window.Q = new URLSearchParams(location.search);
+  window.RUN = Q.get('run') || 'test';
+  window.LANG = Q.get('lang') === 'en' ? 'en' : 'ko';
+  document.write('<script src="data/' + RUN + (LANG === 'en' ? '_en' : '') + '.js"><\/script>');
+  document.write('<script src="data/season.js"><\/script>');  // awards scene data (optional)
+</script>
+<style>
+  :root {
+    --claude: #D97757; --gemini1: #4C7BFF; --gemini2: #9B5CFF; --gptg: #39FF88;
+    --mafia: #FF3B3B; --police: #3BA3FF; --doctor: #3BE37A; --citizen: #C9C9C9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1920px; height: 1080px; overflow: hidden; background: #000; }
+  body { font-family: 'Noto Sans KR', sans-serif; color: #fff; }
+  body.en .disp { font-family: 'Anton', 'Black Han Sans', sans-serif; letter-spacing: 1px; }
+  .scene { position: absolute; inset: 0; width: 1920px; height: 1080px; overflow: hidden; display: none; }
+  .scene.on { display: block; }
+  .abs { position: absolute; }
+  .disp { font-family: 'Black Han Sans', sans-serif; font-weight: 400; }
+  .mono { font-family: 'JetBrains Mono', monospace; }
+  .av { display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; width: var(--h); height: var(--h);
+    font-size: calc(var(--h) * .6); line-height: 1; flex: none; box-shadow: inset 0 -8px 0 #0003, 0 0 0 3px #fff3; }
+  .char .av { position: absolute; left: 5%; bottom: 0; }
+  .char .av.soft { opacity: 0; }
+
+  /* ---------- game ---------- */
+  #cam { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; }
+  #bg, #fg, #bgb, #fgb { position: absolute; inset: 0; background: center/1920px 1080px no-repeat; }
+  #bgb, #fgb { opacity: 0; }
+  #bg.plain { background: radial-gradient(ellipse at 50% 35%, #3a2a1e 0%, #1a120c 55%, #08060a 100%); }
+  #bg.plain::after { content: ''; position: absolute; left: 330px; right: 330px; top: 640px; height: 170px; border-radius: 50%;
+    background: radial-gradient(ellipse at 50% 40%, #6b4226 0%, #3d2414 70%); box-shadow: 0 30px 60px #000c, inset 0 6px 0 #ffffff14; }
+  #dim { position: absolute; inset: 0; background: #000; opacity: 0; }
+  #fg, #fgb { clip-path: polygon(640px 610px, 1280px 610px, 1290px 700px, 1150px 760px, 1100px 830px, 820px 830px, 770px 760px, 630px 700px); }
+  #lines { position: absolute; left: 0; top: 0; overflow: visible; }
+  .char { position: absolute; transform-origin: 50% 100%; }
+  .char img { position: absolute; left: 0; top: 0; display: block; width: 100%; height: 100%; object-fit: contain; object-position: bottom; }
+  .char img.soft { opacity: 0; }
+  .char .tag { position: absolute; left: 50%; top: 100%; margin-top: 6px; transform: translateX(-50%); white-space: nowrap; text-align: center;
+    padding: 3px 12px 4px; border-radius: 12px; background: rgba(8,10,18,.86); border: 2px solid; line-height: 1.15; }
+  .char .tag b { display: block; font: 900 19px 'Noto Sans KR'; }
+  .char .tag i { display: block; font: 500 13px 'JetBrains Mono'; font-style: normal; opacity: .9; }
+  .char .role { position: absolute; left: 50%; top: -28px; transform: translateX(-50%); font: 900 15px 'Noto Sans KR';
+    padding: 2px 10px; border-radius: 10px; white-space: nowrap; }
+  #tint, #spot, #vign, #fxs, #fx, #wipe, #clouds { position: absolute; inset: 0; pointer-events: none; }
+
+  #top { position: absolute; left: 0; right: 0; top: 0; height: 78px; background: linear-gradient(#000d, #0000);
+    display: flex; align-items: center; gap: 18px; padding: 0 28px; }
+  #dayb { font-size: 40px; letter-spacing: 2px; padding: 2px 18px; border-radius: 10px; background: #fff1; border: 2px solid #fff4; }
+  .ph { font: 900 22px 'Noto Sans KR'; padding: 6px 16px; border-radius: 22px; background: #ffffff10; color: #fff7; border: 2px solid #fff2; }
+  .ph.on { color: #111; background: #FFD24A; border-color: #FFD24A; box-shadow: 0 0 24px #FFD24A99; }
+  .ph.on.night { background: #6A7BFF; border-color: #6A7BFF; color: #fff; box-shadow: 0 0 24px #6A7BFFaa; }
+  .sep { color: #fff4; font: 900 20px 'Noto Sans KR'; }
+  #runlabel { margin-left: auto; font: 700 17px 'JetBrains Mono'; opacity: .55; }
+  .panel { position: absolute; top: 92px; width: 262px; padding: 8px 10px; border-radius: 14px; background: rgba(6,8,14,.78); border: 1px solid #fff2; }
+  .panel h4 { font-size: 20px; margin: 2px 2px 6px; letter-spacing: 1px; }
+  #roster { left: 14px; }
+  #votes { right: 14px; }
+  .rrow { display: flex; align-items: center; gap: 7px; height: 30px; padding: 0 3px; border-radius: 8px; white-space: nowrap; }
+  .rrow .face { width: 26px; height: 26px; border-radius: 50%; overflow: hidden; background: #fff1; border: 2px solid; flex: none; }
+  .rrow .face img { width: 100%; height: 190%; object-fit: cover; object-position: top; }
+  .rrow .nm { font: 900 15px 'Noto Sans KR'; }
+  .rrow .md { font: 500 11.5px 'JetBrains Mono'; opacity: .85; }
+  .rrow .st { margin-left: auto; font-size: 15px; }
+  .rrow.dead { opacity: .36; filter: grayscale(1); } .rrow.dead .nm { text-decoration: line-through; }
+  .rrow.hl { background: #ffffff22; }
+  .vrow { display: flex; align-items: center; gap: 8px; height: 30px; }
+  .vrow .nm { width: 70px; font: 900 15px 'Noto Sans KR'; white-space: nowrap; overflow: hidden; }
+  .vrow .bar { height: 16px; border-radius: 8px; background: linear-gradient(90deg, #FF7A3B, #FF3B3B); box-shadow: 0 0 10px #ff3b3b88; }
+  .vrow .n { font: 700 18px 'JetBrains Mono'; }
+  #sub { position: absolute; left: 290px; right: 290px; bottom: 24px; min-height: 140px; padding: 16px 26px 18px; border-radius: 16px;
+    background: rgba(6,8,14,.88); border: 2px solid #fff3; border-left-width: 10px; }
+  #sub .who { display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px; }
+  #sub .who b { font: 900 28px 'Noto Sans KR'; }
+  #sub .who i { font: 700 18px 'JetBrains Mono'; font-style: normal; }
+  #sub .emo { font-size: 30px; margin-left: 4px; }
+  #sub .txt { font: 700 31px/1.42 'Noto Sans KR'; }
+  #banner { position: absolute; left: 50%; top: 96px; font-size: 44px; letter-spacing: 2px; padding: 8px 34px; border-radius: 12px; white-space: nowrap; text-shadow: 0 3px 0 #000; }
+  .cloud { position: absolute; width: 470px; padding: 18px 24px 20px; border-radius: 40px; background: #F4EEFF; color: #2a1a4a;
+    font: 700 23px/1.45 'Noto Sans KR'; box-shadow: 0 8px 30px #0009, 0 0 0 4px #B597FF; }
+  .cloud .lb { position: absolute; top: -16px; left: 22px; font: 900 15px 'Noto Sans KR'; color: #fff; background: #8A5CFF; padding: 2px 12px; border-radius: 12px; }
+  .cloud i { position: absolute; border-radius: 50%; background: #F4EEFF; box-shadow: 0 0 0 4px #B597FF; }
+  .stamp { position: absolute; letter-spacing: 4px; padding: 0 26px; border: 8px solid; border-radius: 14px; white-space: nowrap; text-shadow: 0 0 24px currentColor; transform-origin: 50% 50%; background: rgba(0,0,0,.45); }
+  .callcard { position: absolute; left: 960px; top: 300px; transform-origin: 50% 50%; white-space: nowrap; }
+  .callcard .w { font-size: 170px; line-height: 1; color: #fff; background: #0a0a0a; padding: 10px 46px 20px; border: 6px solid #fff;
+    box-shadow: 14px 14px 0 #E0141E; text-shadow: 6px 6px 0 #E0141E; }
+  .flash { position: absolute; inset: 0; }
+  .card { position: absolute; left: 50%; top: 46%; width: 380px; height: 500px; margin: -250px 0 0 -190px; border-radius: 26px; transform-style: preserve-3d; }
+  .card > div { position: absolute; inset: 0; border-radius: 26px; backface-visibility: hidden; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; border: 6px solid #fff; }
+  .card .backf { background: repeating-linear-gradient(45deg, #301018 0 18px, #45141f 18px 36px); transform: rotateY(180deg); font-size: 140px; color: #ffcf4a; }
+  .card .front img { height: 270px; }
+  .card .front b { font-size: 62px; }
+
+  /* ---------- intro_cast ---------- */
+  #s-intro { background: radial-gradient(ellipse at 50% 40%, #241a33 0%, #07070c 70%); }
+  #s-intro .bgimg { position: absolute; inset: 0; background: center/cover; opacity: .22; filter: blur(3px); }
+  .ttl { position: absolute; left: 0; right: 0; text-align: center; }
+  .ttl h1 { font-size: 120px; letter-spacing: 4px; text-shadow: 0 6px 0 #000, 0 0 40px #ff3b3b66; }
+  .ttl p { font: 700 34px 'JetBrains Mono'; opacity: .85; margin-top: 10px; }
+  .grow { position: absolute; left: 120px; right: 120px; height: 250px; display: flex; align-items: center; gap: 24px; }
+  .grow .co { width: 250px; font-size: 56px; }
+  .grow .co small { display: block; font: 500 18px 'JetBrains Mono'; opacity: .75; margin-top: 4px; }
+  .ccard { flex: 1; height: 232px; border-radius: 22px; background: #ffffff0d; border: 3px solid; overflow: hidden; display: flex; align-items: flex-end; }
+  .ccard img { height: 222px; margin-left: 12px; }
+  .ccard .lb { padding: 0 8px 22px 14px; }
+  .ccard .lb b { display: block; font: 900 38px 'Noto Sans KR'; }
+  .ccard .lb span { display: block; font: 700 21px 'JetBrains Mono'; }
+  .ccard .lb em { display: block; font: 500 19px 'Noto Sans KR'; font-style: normal; opacity: .75; margin-top: 4px; }
+  .rolebox { position: absolute; left: 0; right: 0; top: 250px; display: flex; justify-content: center; gap: 36px; }
+  .rtok { width: 300px; height: 300px; border-radius: 30px; border: 5px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; background: #ffffff08; }
+  .rtok .ic { font-size: 96px; } .rtok b { font-size: 52px; margin-top: 6px; } .rtok span { font: 900 30px 'Noto Sans KR'; opacity: .9; }
+  .rules { position: absolute; left: 0; right: 0; top: 640px; text-align: center; font: 700 34px/1.8 'Noto Sans KR'; }
+  .rules code { font: 700 30px 'JetBrains Mono'; color: var(--gptg); }
+
+  /* ---------- arch ---------- */
+  #s-arch { background: radial-gradient(ellipse at 40% 30%, #121a2b 0%, #06080d 75%); }
+  #s-arch .grid { position: absolute; inset: 0; background-image: linear-gradient(#ffffff08 1px, transparent 1px), linear-gradient(90deg, #ffffff08 1px, transparent 1px); background-size: 40px 40px; }
+  .box { position: absolute; border-radius: 16px; border: 2px solid #ffffff40; background: #0e1422e6; padding: 12px 16px; }
+  .box h5 { font: 900 22px 'Noto Sans KR'; margin-bottom: 4px; }
+  .box .c { font: 700 22px 'JetBrains Mono'; }
+  .box .s { font: 500 17px 'Noto Sans KR'; opacity: .82; }
+  .pill { display: inline-block; font: 900 16px 'Noto Sans KR'; padding: 3px 12px; border-radius: 12px; margin-top: 6px; }
+  .faces { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+  .faces span { display: flex; align-items: center; gap: 5px; font: 700 13.5px 'JetBrains Mono'; background: #ffffff10; padding: 2px 9px 2px 2px; border-radius: 16px; }
+  .faces img { width: 28px; height: 28px; border-radius: 50%; object-fit: cover; object-position: top; background: #fff2; }
+  .json { font: 500 17px/1.55 'JetBrains Mono'; white-space: pre; }
+  .json .k { color: #8FD3FF; } .json .v { color: #FFD27A; } .json .p { color: #888; }
+  #arch-svg { position: absolute; inset: 0; }
+  .numcard { position: absolute; width: 400px; height: 220px; border-radius: 24px; border: 3px solid; background: #0c111ef2; display: flex; flex-direction: column; justify-content: center; align-items: center; }
+  .numcard b { font: 700 86px 'JetBrains Mono'; } .numcard span { font: 900 26px 'Noto Sans KR'; opacity: .85; }
+  .atitle { position: absolute; left: 60px; top: 34px; font-size: 46px; letter-spacing: 2px; }
+  .atitle small { font: 700 20px 'JetBrains Mono'; opacity: .6; margin-left: 14px; letter-spacing: 0; }
+  /* ---------- intro: 우승 기준 ---------- */
+  #i-score { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 34px; }
+  #i-score h2 { font-size: 84px; color: #FFD24A; text-shadow: 0 6px 0 #000, 0 0 40px #FFD24A55; }
+  .sgrid { display: grid; grid-template-columns: repeat(4, 360px); gap: 26px; }
+  .sitem { height: 260px; border-radius: 26px; border: 4px solid #FFD24A88; background: #ffffff0b; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; text-align: center; padding: 0 18px; }
+  .sitem b { font: 700 92px 'JetBrains Mono'; color: #FFD24A; }
+  .sitem span { font: 900 30px/1.3 'Noto Sans KR'; }
+  #i-score p { font: 700 28px 'Noto Sans KR'; opacity: .8; }
+
+  /* ---------- awards ---------- */
+  #s-awards { background: radial-gradient(ellipse at 50% 35%, #2b1d0a 0%, #0b0806 62%, #050404 100%); }
+  #s-awards .bgimg { position: absolute; inset: 0; background: center/cover; opacity: .16; }
+  .aw-title { position: absolute; left: 0; right: 0; text-align: center; }
+  .aw-title h1 { font-size: 170px; color: #FFD24A; letter-spacing: 8px; text-shadow: 0 8px 0 #000, 0 0 60px #FFD24A66; }
+  .aw-title p { font: 700 32px 'JetBrains Mono'; opacity: .8; margin-top: 8px; }
+  .awcard { position: absolute; left: 120px; right: 120px; top: 120px; height: 800px; border-radius: 40px; border: 5px solid; background: linear-gradient(110deg, #16110b 0%, #0d0b0a 60%); overflow: hidden; }
+  .awcard .ped { position: absolute; left: 70px; bottom: 50px; width: 560px; height: 690px; display: flex; align-items: flex-end; justify-content: center; }
+  .awcard .ped img { height: 660px; position: relative; filter: drop-shadow(0 18px 24px #000c); }
+  .awcard .ped::before { content: ''; position: absolute; left: 40px; right: 40px; bottom: -10px; height: 70px; border-radius: 50%; background: radial-gradient(#FFD24A55, transparent 70%); }
+  .awcard .glow { position: absolute; left: -120px; top: -200px; width: 900px; height: 1200px; background: radial-gradient(ellipse at 50% 45%, var(--c) 0%, transparent 60%); opacity: .28; }
+  .awcard .txt { position: absolute; left: 700px; right: 70px; top: 120px; }
+  .awcard .no { font: 700 30px 'JetBrains Mono'; color: #FFD24A; opacity: .85; letter-spacing: 3px; }
+  .awcard .aw { font-size: 132px; line-height: 1.05; color: #FFD24A; margin: 14px 0 26px; text-shadow: 0 6px 0 #000; }
+  .awcard .who { font: 900 58px 'Noto Sans KR'; }
+  .awcard .md { font: 700 38px 'JetBrains Mono'; margin-top: 6px; }
+  .awcard .metric { display: inline-block; margin-top: 40px; font: 900 40px 'Noto Sans KR'; padding: 14px 30px; border-radius: 22px; background: #ffffff12; border: 3px solid #ffffff30; }
+  .awdots { position: absolute; left: 0; right: 0; bottom: 70px; display: flex; justify-content: center; gap: 16px; }
+  .awdots i { width: 18px; height: 18px; border-radius: 50%; background: #ffffff25; }
+  .awdots i.on { background: #FFD24A; box-shadow: 0 0 12px #FFD24A; }
+  .board { position: absolute; left: 170px; right: 170px; top: 190px; }
+  .brow { display: flex; align-items: center; gap: 22px; height: 76px; border-radius: 16px; padding: 0 18px; }
+  .brow .face { width: 58px; height: 58px; border-radius: 50%; overflow: hidden; border: 3px solid; flex: none; background: #fff1; }
+  .brow .face img { width: 100%; height: 200%; object-fit: cover; object-position: top; }
+  .brow .nm { width: 420px; white-space: nowrap; }
+  .brow .nm b { font: 900 32px 'Noto Sans KR'; } .brow .nm i { font: 700 22px 'JetBrains Mono'; font-style: normal; margin-left: 10px; opacity: .9; }
+  .brow .bar { height: 40px; border-radius: 20px; }
+  .brow .pt { font: 700 40px 'JetBrains Mono'; width: 90px; }
+  .champ { position: absolute; left: 0; right: 0; text-align: center; }
+  .disc { position: absolute; left: 0; right: 0; bottom: 46px; text-align: center; font: 700 28px 'Noto Sans KR'; color: #e8e2d6; }
+</style>
+</head>
+<body>
+
+<section class="scene" id="s-intro">
+  <div class="bgimg"></div>
+  <div class="ttl" id="i-title" style="top:330px"><h1 class="disp" id="i-h1"></h1><p id="i-sub"></p></div>
+  <div id="i-rows"></div>
+  <div id="i-roles" style="position:absolute;inset:0">
+    <div class="ttl" style="top:120px"><h1 class="disp" style="font-size:76px" id="i-roletitle"></h1></div>
+    <div class="rolebox" id="i-rolebox"></div>
+    <div class="rules" id="i-rules"></div>
+  </div>
+  <div id="i-score"></div>
+</section>
+
+<section class="scene" id="s-game">
+  <div id="cam">
+    <div id="bg"></div>
+    <div id="bgb"></div>
+    <div id="dim"></div>
+    <svg id="lines" width="1920" height="1080"></svg>
+    <div id="holes" style="position:absolute;inset:0"></div>
+    <div id="chars"></div>
+    <div id="fg"></div>
+    <div id="fgb"></div>
+  </div>
+  <div id="tint"></div>
+  <div id="spot"></div>
+  <div id="vign"></div>
+  <div id="fxs"></div>
+  <div id="top"></div>
+  <div id="roster" class="panel"></div>
+  <div id="votes" class="panel"></div>
+  <div id="banner" class="disp"></div>
+  <div id="clouds"></div>
+  <div id="sub"></div>
+  <div id="fx"></div>
+  <div id="wipe"></div>
+</section>
+
+<section class="scene" id="s-awards">
+  <div class="bgimg"></div>
+  <div id="aw" style="position:absolute;inset:0"></div>
+</section>
+
+<section class="scene" id="s-arch">
+  <div class="grid"></div>
+  <svg id="arch-svg" viewBox="0 0 1920 1080"></svg>
+  <div id="arch-boxes"></div>
+  <div id="a-nums" style="position:absolute;inset:0"></div>
+</section>
+
+<script>
+(() => {
+const G = window.GAME, L = LANG;
+document.body.classList.toggle('en', L === 'en');
+const tr = (ko, en) => (L === 'en' ? en : ko);
+const clamp = (x, a = 0, b = 1) => Math.max(a, Math.min(b, x));
+const ease = x => 1 - Math.pow(1 - clamp(x), 3);
+const easeIn = x => Math.pow(clamp(x), 2);
+const backOut = x => { x = clamp(x); const c = 1.9; return 1 + (c + 1) * Math.pow(x - 1, 3) + c * Math.pow(x - 1, 2); };
+const lerp = (a, b, x) => a + (b - a) * x;
+const hash = n => { const s = Math.sin(n * 127.1 + 311.7) * 43758.5453; return s - Math.floor(s); };
+const esc = s => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+
+const ROLE_NAME = { '마피아': tr('마피아', 'Mafia'), '경찰': tr('경찰', 'Detective'), '의사': tr('의사', 'Doctor'), '시민': tr('시민', 'Citizen') };
+const ROLE_COLOR = { '마피아': 'var(--mafia)', '경찰': 'var(--police)', '의사': 'var(--doctor)', '시민': 'var(--citizen)' };
+const ROLE_ICON = { '마피아': '🕶️', '경찰': '🔍', '의사': '💉', '시민': '🙂' };
+const EMO = { '침착': '😐', '의심': '🤨', '확신': '😤', '당황': '😳', '억울': '😭', '웃음': '😆', '분노': '😡', '긴장': '😰' };
+const SHOW_ROLES = Q.get('roles') !== '0';
+
+// Seats: the original 9-chair layout (tuned for a 1920x1080 stage), resampled for any number of players
+const SEAT9_X = [224, 410, 590, 776, 961, 1148, 1334, 1513, 1694];
+const SEAT9_FOOT = [770, 745, 715, 690, 680, 690, 715, 745, 770];
+const SEAT9_H = [330, 318, 306, 296, 292, 296, 306, 318, 330];
+const NSEAT = G ? G.seats.length : 9;
+const resample = arr => Array.from({ length: NSEAT }, (_, i) => {
+  if (NSEAT === 9) return arr[i];
+  const f = NSEAT === 1 ? 4 : i * 8 / (NSEAT - 1), a = Math.floor(f), b = Math.min(8, a + 1);
+  return arr[a] + (arr[b] - arr[a]) * (f - a);
+});
+const SEAT_X = resample(SEAT9_X), SEAT_FOOT = resample(SEAT9_FOOT);
+const SEAT_H = resample(SEAT9_H).map(h => h * Math.min(1.25, Math.max(0.8, 9 / Math.max(NSEAT, 1) * 0.55 + 0.45)));
+// Picture or emoji avatar. h = avatar size in px when there is no picture
+const IMG = (pl, h, attrs = '', cls = '') => pl.img
+  ? `<img class="${cls}" src="${esc(cls === 'soft' ? (pl.img_soft || pl.img) : pl.img)}" ${attrs}>`
+  : `<span class="av ${cls}" style="--h:${h}px;background:radial-gradient(circle at 35% 30%, ${pl.color}, ${pl.color}88 70%)" ${attrs.replace(/^style="/, 'data-x="')}>${esc(pl.emoji || '🙂')}</span>`;
+const BG = (G && G.bg) || (window.SEASON && window.SEASON.bg), BG_BLUR = (G && G.bg_blur) || (window.SEASON && window.SEASON.bg_blur) || BG;
+
+const SCENES = [
+  { id: 'intro_cast', el: 's-intro', dur: 26, draw: drawIntro, label: '참가자·역할·우승 기준 소개' },
+  { id: 'game', el: 's-game', dur: G ? G.total : 10, draw: drawGame, label: '게임 진행 (' + (G ? G.run : '') + ')' },
+  { id: 'arch', el: 's-arch', dur: 38, draw: drawArch, label: '아키텍처·데이터 흐름' },
+  { id: 'awards', el: 's-awards', dur: 56, draw: (t) => drawAwards(t), label: '시상식·최종 우승' },
+];
+const current = SCENES.find(s => s.id === (Q.get('scene') || 'game')) || SCENES[1];
+SCENES.forEach(s => document.getElementById(s.el).classList.toggle('on', s === current));
+window.sceneInfo = () => SCENES.map(s => ({ id: s.id, dur: Math.round(s.dur * 100) / 100, label: s.label, alpha: false }));
+window.seek = t => current.draw(t);
+
+const P = G.players, SEATS = G.seats;
+if (BG) {
+  ['bg', 'fg'].forEach(id => document.getElementById(id).style.backgroundImage = `url("${BG}")`);
+  ['bgb', 'fgb'].forEach(id => document.getElementById(id).style.backgroundImage = `url("${BG_BLUR}")`);
+} else {
+  document.getElementById('bg').classList.add('plain');
+  ['fg', 'fgb', 'bgb'].forEach(id => document.getElementById(id).style.display = 'none');
+}
+document.querySelectorAll('.bgimg').forEach((el, i) => { if (BG) el.style.backgroundImage = `url("${el.closest('#s-awards') ? BG_BLUR : BG}")`; });
+const seatOf = {}; SEATS.forEach((c, i) => seatOf[c] = i);
+const setHTML = (el, h) => { if (el._h !== h) { el._h = h; el.innerHTML = h; } };
+const D = c => (c && P[c] ? esc(P[c].disp) : "");
+const chest = c => { const i = seatOf[c]; return { x: SEAT_X[i], y: SEAT_FOOT[i] - SEAT_H[i] * 0.55 }; };
+const head = c => { const i = seatOf[c]; return { x: SEAT_X[i], y: SEAT_FOOT[i] - SEAT_H[i] * 0.86 }; };
+const nameTag = c => `<b style="color:${P[c].color}">${D(c)}</b> · <i style="color:${P[c].color}">${esc(P[c].model)}</i>`;
+
+// ================= game =================
+const VIS = G.events.filter(e => !e.skip);
+const visIdx = new Map(VIS.map((e, i) => [e, i]));
+const charsEl = document.getElementById('chars');
+SEATS.forEach((c, i) => {
+  const d = document.createElement('div');
+  d.className = 'char'; d.id = 'ch-' + i;
+  const w = SEAT_H[i] * 0.58;
+  Object.assign(d.style, { left: (SEAT_X[i] - w / 2) + 'px', top: (SEAT_FOOT[i] - SEAT_H[i]) + 'px', width: w + 'px', height: SEAT_H[i] + 'px' });
+  const r = P[c].role;
+  d.innerHTML = IMG(P[c], w * 0.9, '', 'sharp') + IMG(P[c], w * 0.9, '', 'soft') +
+    (SHOW_ROLES ? `<div class="role" style="background:${ROLE_COLOR[r]};color:${r === '시민' ? '#111' : '#fff'}">${ROLE_ICON[r]} ${ROLE_NAME[r]}</div>` : '') +
+    `<div class="tag" style="border-color:${P[c].color}"><b style="color:${P[c].color}">${D(c)}</b><i>${esc(P[c].model)}</i></div>`;
+  if (!P[c].img) { const rb = d.querySelector('.role'); if (rb) rb.style.top = (SEAT_H[i] - w * 0.9 - 30) + 'px'; }
+  charsEl.appendChild(d);
+});
+
+// ---- camera ----  screen = world * s + (tx, ty)
+const WIDE = { s: 1, tx: 0, ty: 0 };
+function fit(c) { const s = Math.max(1, c.s); return { s, tx: clamp(c.tx, 1920 - 1920 * s, 0), ty: clamp(c.ty, 1080 - 1080 * s, 0) }; }
+function focus(wx, wy, s, fx, fy) { return fit({ s, tx: fx - s * wx, ty: fy - s * wy }); }
+function close(c, v) {
+  const i = seatOf[c], x = SEAT_X[i], f = SEAT_FOOT[i], h = SEAT_H[i];
+  if (v === 0) return focus(x, f - h * 0.55, 2.3, 700, 560);
+  if (v === 1) return focus(x, f - h * 0.66, 2.75, 960, 520);
+  return focus(x, f - h * 0.55, 2.05, 1220, 580);
+}
+function lerpCam(a, b, k) { return { s: lerp(a.s, b.s, k), tx: lerp(a.tx, b.tx, k), ty: lerp(a.ty, b.ty, k) }; }
+function punch(c, x) { // 1.0→1.08 (40ms 상승, 80ms 복귀) 화면 중심 기준
+  const p = x < 0 ? 0 : x < 0.04 ? x / 0.04 : Math.max(0, 1 - (x - 0.04) / 0.08);
+  const m = 1 + 0.08 * p;
+  return fit({ s: c.s * m, tx: 960 - (960 - c.tx) * m, ty: 540 - (540 - c.ty) * m });
+}
+const CALL_LEN = 1.4;
+function baseCam(e, lt) {
+  if (!e) return WIDE;
+  if (e.type === 'speech') {
+    const co = e.callout;
+    if (co && lt >= co.at && lt < co.at + CALL_LEN) return close(co.target, (e.idx + 1) % 3);
+    return close(e.who, e.idx % 3);
+  }
+  if (e.type === 'execute') { const p = chest(e.who); return focus(p.x, p.y, 1 + 0.3 * ease(lt / 6), p.x, p.y); }
+  if (e.type === 'death') { const p = chest(e.who); return focus(p.x, p.y, 1 + 0.2 * ease(lt / 4), p.x, p.y); }
+  return WIDE;
+}
+function camAt(e, lt) {
+  if (!e) return WIDE;
+  const i = visIdx.get(e), prev = i > 0 ? VIS[i - 1] : null;
+  let c = baseCam(e, lt);
+  const TR = e.type === 'speech' ? 0.4 : 0.5;
+  if (lt < TR && prev) c = lerpCam(baseCam(prev, prev.dur), baseCam(e, 0), ease(lt / TR));
+  if (e.type === 'speech') {
+    c = punch(c, lt - TR);
+    const co = e.callout;
+    if (co) {
+      c = punch(c, lt - co.at);
+      const back = lt - (co.at + CALL_LEN);
+      if (back >= 0 && back < 0.25) c = lerpCam(close(co.target, (e.idx + 1) % 3), close(e.who, e.idx % 3), ease(back / 0.25));
+    }
+  }
+  return c;
+}
+
+function gameState(t) {
+  const st = { day: 1, phase: 'start', dead: {}, exec: {}, votes: {}, cur: null };
+  for (const e of G.events) {
+    const vis = !e.skip;
+    if (vis && e.start > t) break;
+    const lt = vis ? t - e.start : 1e9;
+    if (vis && lt < e.dur) st.cur = e;
+    switch (e.type) {
+      case 'night': st.day = e.day; st.phase = 'night'; st.votes = {}; break;
+      case 'mafia_pick': case 'doctor_save': case 'police_check': st.phase = 'night'; break;
+      case 'death': st.phase = 'morning'; if (lt > 1.2) st.dead[e.who] = 'mafia'; break;
+      case 'no_death': st.phase = 'morning'; break;
+      case 'day': case 'speech': st.phase = 'talk'; break;
+      case 'vote': st.phase = 'vote'; if (lt > 0.7) st.votes[e.target] = (st.votes[e.target] || 0) + 1; break;
+      case 'execute': st.phase = 'exec'; if (lt > 2.6) { st.dead[e.who] = 'exec'; st.exec[e.who] = e.role; } break;
+      case 'no_execute': st.phase = 'exec'; break;
+      case 'end': st.phase = 'end'; break;
+    }
+  }
+  return st;
+}
+
+function drawGame(t) {
+  const st = gameState(t), e = st.cur, lt = e ? t - e.start : 0;
+  const cam = camAt(e, lt);
+  // 미세 흔들림 (클로즈업 진입·지목·밤 결과·처형만)
+  let shake = 0;
+  if (e && e.type === 'speech') {
+    shake += 3 * clamp(1 - (lt - 0.4) / 0.2) * (lt > 0.4 ? 1 : 0);
+    if (e.callout) { const x = lt - e.callout.at; if (x >= 0 && x < 0.3) shake += 14 * (1 - x / 0.3); }
+  }
+  if (e && e.type === 'death' && lt > 0.9) shake += 18 * Math.exp(-(lt - 0.9) * 3);
+  if (e && e.type === 'no_execute') shake += 12 * Math.exp(-lt * 3);
+  if (e && e.type === 'execute' && lt > 1.9) shake += 14 * Math.exp(-(lt - 1.9) * 4);
+  const sx = shake * Math.sin(t * 93), sy = shake * Math.cos(t * 71);
+  document.getElementById('cam').style.transform = `translate(${cam.tx + sx}px, ${cam.ty + sy}px) scale(${cam.s})`;
+  const toS = p => ({ x: p.x * cam.s + cam.tx + sx, y: p.y * cam.s + cam.ty + sy });
+  const k = clamp((cam.s - 1.05) / 0.8); // 클로즈업 정도
+  const focusC = e && e.type === 'speech' ? (e.callout && lt >= e.callout.at && lt < e.callout.at + CALL_LEN ? e.callout.target : e.who) : null;
+  const inCall = e && e.callout && lt >= e.callout.at && lt < e.callout.at + CALL_LEN;
+
+  // 낮/밤
+  const night = st.phase === 'night';
+  let n = night ? 1 : 0;
+  if (e && e.type === 'night') n = ease(lt / 1.2);
+  if (e && (e.type === 'death' || e.type === 'no_death')) n = 1 - ease(lt / 1.4);
+  document.getElementById('tint').style.background = `linear-gradient(rgba(10,22,70,${0.55 * n}), rgba(5,8,30,${0.62 * n})),` +
+    `radial-gradient(ellipse at 50% 100%, rgba(255,40,40,${0.22 * n}), transparent 60%),` +
+    `linear-gradient(rgba(255,170,70,${0.10 * (1 - n)}), rgba(255,140,40,${0.06 * (1 - n)}))`;
+  document.getElementById('bgb').style.opacity = k;
+  document.getElementById('fgb').style.opacity = k;
+  document.getElementById('dim').style.opacity = 0.35 * k + 0.12 * n;
+
+  // 집중선 (클로즈업 화자 뒤, world 좌표)
+  const lines = document.getElementById('lines');
+  if (focusC && k > 0.05) {
+    const p = chest(focusC), col = inCall ? '#ff2a2a' : P[focusC].color;
+    let s = '';
+    for (let j = 0; j < 72; j++) {
+      const a = (j / 72) * Math.PI * 2 + hash(j) * 0.05 + lt * 0.05;
+      const r0 = 120 + hash(j + 9) * 60, r1 = r0 + 260 + hash(j + 4) * 520;
+      s += `<line x1="${p.x + Math.cos(a) * r0}" y1="${p.y + Math.sin(a) * r0}" x2="${p.x + Math.cos(a) * r1}" y2="${p.y + Math.sin(a) * r1}" stroke="${j % 3 ? '#ffffff' : col}" stroke-width="${0.6 + hash(j + 2) * 0.9}" opacity="${(0.12 + hash(j + 5) * 0.22) * k * (inCall ? 1.6 : 1)}"/>`;
+    }
+    lines.innerHTML = s;
+  } else lines.innerHTML = '';
+
+  // 상단 바
+  const PH = [['night', tr('🌙 밤', '🌙 NIGHT')], ['morning', tr('☀️ 아침', '☀️ MORNING')], ['talk', tr('💬 토론', '💬 TALK')], ['vote', tr('🗳️ 투표', '🗳️ VOTE')], ['exec', tr('⚖️ 처형', '⚖️ EXECUTION')]];
+  setHTML(document.getElementById('top'), `<div id="dayb" class="disp">DAY ${st.day}</div>` +
+    PH.map(([key, label], i) => (i ? '<span class="sep">›</span>' : '') + `<div class="ph ${st.phase === key ? 'on' : ''} ${key === 'night' ? 'night' : ''}">${label}</div>`).join('') +
+    `<div id="runlabel">${esc(G.run)} · seed ${G.seed} · ${G.reveal ? tr('정체 공개', 'identities revealed') : tr('정체 비공개', 'anonymous')}</div>`);
+
+  // 생존판
+  const hl = e && e.who;
+  setHTML(document.getElementById('roster'), `<h4 class="disp">${tr('생존자', 'PLAYERS')}</h4>` + SEATS.map(c =>
+    `<div class="rrow ${st.dead[c] ? 'dead' : ''} ${hl === c ? 'hl' : ''}"><div class="face" style="border-color:${P[c].color}">${IMG(P[c], 22)}</div>` +
+    `<span class="nm" style="color:${P[c].color}">${D(c)}</span><span class="md">${esc(P[c].model)}</span><span class="st">${st.exec[c] ? ROLE_ICON[st.exec[c]] : st.dead[c] ? '✖' : ''}</span></div>`).join(''));
+
+  // 투표판
+  const vp = document.getElementById('votes');
+  const showV = st.phase === 'vote' || st.phase === 'exec';
+  vp.style.display = showV ? 'block' : 'none';
+  if (showV) {
+    const rows = Object.entries(st.votes).sort((a, b) => b[1] - a[1]);
+    const max = Math.max(1, ...rows.map(r => r[1]));
+    setHTML(vp, `<h4 class="disp">${tr('🗳️ 득표', '🗳️ VOTES')}</h4>` + (rows.length ? rows.map(([c, v]) =>
+      `<div class="vrow"><span class="nm" style="color:${P[c].color}">${D(c)}</span><div class="bar" style="width:${(v / max) * 120}px"></div><span class="n">${v}</span></div>`).join('')
+      : `<div class="vrow" style="opacity:.6">${tr('투표 중…', 'voting…')}</div>`));
+  }
+
+  // 캐릭터
+  SEATS.forEach((c, i) => {
+    const d = document.getElementById('ch-' + i);
+    let sc = 1, ty = 0, op = 1, f = [];
+    if (st.dead[c]) { f.push('grayscale(1) brightness(.6)'); op = .5; }
+    const soft = k > 0.02 && c !== focusC ? k : 0;
+    if (soft) f.push(`brightness(${1 - 0.45 * k})`);
+    if (e && e.who === c && e.type === 'vote') { sc = 1 + 0.1 * ease(lt / 0.3); ty = -Math.abs(Math.sin(lt * 7)) * 12 * Math.exp(-lt * 1.8); }
+    if (c === focusC) ty = -Math.abs(Math.sin(lt * 6)) * 6 * Math.exp(-lt * 2);
+    if (e && e.type === 'mafia_pick' && e.who === c) f.push('drop-shadow(0 0 22px #ff2b2b)');
+    if (e && e.type === 'doctor_save' && e.who === c) f.push('drop-shadow(0 0 22px #3BE37A)');
+    if (e && e.type === 'police_check' && e.who === c) f.push('drop-shadow(0 0 22px #3BA3FF)');
+    let clip = 'none';
+    if (e && e.type === 'execute' && e.who === c) { ty = easeIn((lt - 1.9) / 0.7) * 560; f = []; clip = `inset(-60px -60px ${Math.max(0, ty)}px -60px)`; }
+    if (e && e.type === 'death' && e.who === c && lt < 1.2) { f = []; op = 1; }
+
+    d.style.clipPath = clip;
+    d.style.transform = `translateY(${ty}px) scale(${sc})`;
+    d.style.opacity = op;
+    const fs = f.join(' ') || 'none', sh = d.querySelector('.sharp'), so = d.querySelector('.soft');
+    if (sh.style.filter !== fs) { sh.style.filter = fs; so.style.filter = fs; }
+    sh.style.opacity = 1 - soft; so.style.opacity = soft;
+    d.querySelector('.tag').style.opacity = 1 - k;
+    const rb = d.querySelector('.role'); if (rb) rb.style.opacity = 1 - k;
+    d.style.zIndex = c === focusC || (e && e.who === c) ? 5 : 1;
+  });
+
+  // 처형 구멍 (world, 캐릭터 뒤)
+  const holes = document.getElementById('holes');
+  if (e && e.type === 'execute' && lt > 1.75) {
+    const i = seatOf[e.who], q = ease((lt - 1.75) / 0.2), w = 230 * q;
+    holes.innerHTML = `<div class="abs" style="left:${SEAT_X[i] - w / 2}px;top:${SEAT_FOOT[i] - 26 * q}px;width:${w}px;height:${52 * q}px;border-radius:50%;background:radial-gradient(ellipse at 50% 40%, #000 55%, #2a0a0a 75%, transparent 78%);box-shadow:0 0 30px #ff2b2b66"></div>`;
+  } else holes.innerHTML = '';
+
+  // 스포트라이트 (wide 장면의 행동자·처형)
+  const spot = document.getElementById('spot');
+  let sp = null, spa = 0;
+  if (e && ['vote', 'mafia_pick', 'doctor_save', 'police_check'].includes(e.type)) { sp = toS(chest(e.who)); spa = 0.45 * ease(lt / 0.4); }
+  if (e && e.type === 'execute') {
+    const cands = Object.entries(st.votes).sort((a, b) => b[1] - a[1]).slice(0, 2).map(r => r[0]);
+    const other = cands.find(c => c !== e.who) || e.who;
+    const sweep = lt < 1.4 ? (Math.floor(lt / 0.28) % 2 ? other : e.who) : e.who;
+    sp = toS(chest(sweep)); spa = 0.78 * ease(lt / 0.5);
+  }
+  spot.style.background = sp ? `radial-gradient(circle ${e.type === 'execute' ? 200 * cam.s : 230}px at ${sp.x}px ${sp.y}px, rgba(255,240,200,.12), rgba(0,0,0,${spa}) 100%)` : 'none';
+  // 비네트 (밤 결과·투표 결과·처형)
+  let vg = 0;
+  if (e && ['death', 'execute', 'no_execute', 'no_death'].includes(e.type)) vg = ease(lt / 0.5);
+  document.getElementById('vign').style.background = `radial-gradient(ellipse at 50% 52%, transparent ${48 - 18 * vg}%, rgba(0,0,0,${0.55 + 0.35 * vg}) 100%)`;
+
+  drawBanner(e, lt);
+  drawSub(e, lt);
+  drawClouds(e, lt, toS, inCall);
+  drawFx(e, lt, toS, st);
+}
+
+function drawBanner(e, lt) {
+  const b = document.getElementById('banner');
+  const map = {
+    setup: [tr('🎲 게임 시작', '🎲 GAME START'), 'rgba(40,20,10,.85)', '#FFD24A'],
+    night: [e && tr(`🌙 DAY ${e.day} · 밤이 되었습니다`, `🌙 DAY ${e.day} · NIGHT FALLS`), 'rgba(20,30,90,.85)', '#C9D3FF'],
+    mafia_pick: [e && tr(`🕶️ 마피아 ${D(e.who)}의 선택`, `🕶️ MAFIA ${D(e.who)} CHOOSES`), 'rgba(90,10,10,.88)', '#FFB3B3'],
+    doctor_save: [e && tr(`💉 의사 ${D(e.who)}의 선택`, `💉 DOCTOR ${D(e.who)} PROTECTS`), 'rgba(10,70,30,.88)', '#B8FFCF'],
+    police_check: [e && tr(`🔍 경찰 ${D(e.who)}의 조사`, `🔍 DETECTIVE ${D(e.who)} INVESTIGATES`), 'rgba(10,40,90,.88)', '#B8DCFF'],
+    death: [e && tr(`☀️ 아침… 지난밤 ${D(e.who)}이(가) 당했다`, `☀️ MORNING… ${D(e.who)} WAS KILLED`), 'rgba(100,10,10,.88)', '#fff'],
+    no_death: [tr('☀️ 아침… 아무도 죽지 않았다', '☀️ MORNING… NOBODY DIED'), 'rgba(10,70,30,.88)', '#fff'],
+    day: [e && tr(`💬 DAY ${e.day} · 토론 시작`, `💬 DAY ${e.day} · DISCUSSION`), 'rgba(70,45,10,.88)', '#FFE2A8'],
+    vote: [tr('🗳️ 투표', '🗳️ VOTE'), 'rgba(70,20,20,.8)', '#fff'],
+    execute: [e && tr(`⚖️ ${D(e.who)} 처형 (${e.votes}표)`, `⚖️ ${D(e.who)} EXECUTED (${e.votes} votes)`), 'rgba(100,10,10,.92)', '#fff'],
+    no_execute: [tr('⚖️ 동률! 처형 없음', '⚖️ TIE! NO EXECUTION'), 'rgba(60,60,60,.92)', '#fff'],
+  };
+  const m = e && map[e.type];
+  if (!m) { b.style.display = 'none'; return; }
+  b.style.display = 'block';
+  b.innerHTML = m[0]; b.style.background = m[1]; b.style.color = m[2]; b.style.border = `3px solid ${m[2]}55`;
+  const a = ease(lt / 0.35);
+  b.style.opacity = a;
+  b.style.transform = `translateX(-50%) translateY(${(1 - a) * -30}px) scale(${lerp(1.15, 1, a)})`;
+}
+
+function typed(text, lt, dur) { const m = Math.floor(clamp(lt / Math.max(0.3, dur * 0.82)) * text.length); return esc(text.slice(0, m)); }
+
+function drawSub(e, lt) {
+  const s = document.getElementById('sub');
+  if (!e || !['speech', 'vote'].includes(e.type)) { s.style.display = 'none'; return; }
+  s.style.display = 'block';
+  const c = e.who;
+  s.style.borderColor = P[c].color;
+  if (e.type === 'speech') {
+    s.innerHTML = `<div class="who">${nameTag(c)}<span class="emo">${EMO[e.emotion] || '💬'}</span></div><div class="txt">${typed(e.text || '', lt, e.typeDur || e.speak)}</div>`;
+  } else {
+    s.innerHTML = `<div class="who">🗳️ ${nameTag(c)} → <b style="color:${P[e.target].color}">${D(e.target)}</b></div><div class="txt" style="font-size:28px">${typed(e.reason || '', lt, e.dur * 0.7)}</div>`;
+  }
+}
+
+function drawClouds(e, lt, toS, inCall) {
+  const box = document.getElementById('clouds');
+  if (!e || !e.inner || inCall) { box.innerHTML = ''; return; }
+  let t0;
+  if (e.type === 'speech') t0 = e.speak;
+  else if (e.type === 'vote') t0 = e.dur * 0.55;
+  else if (['mafia_pick', 'doctor_save', 'police_check'].includes(e.type)) t0 = 1.0;
+  else { box.innerHTML = ''; return; }
+  const a = ease((lt - t0) / 0.35);
+  if (a <= 0) { box.innerHTML = ''; return; }
+  const h = toS(head(e.who));
+  let x, y;
+  if (e.type === 'speech') { x = h.x < 960 ? h.x + 230 : h.x - 230 - 470; y = clamp(h.y - 40, 100, 560); }
+  else { x = h.x - 235; y = h.y - 250; }
+  x = clamp(x, 290, 1920 - 290 - 470); y = clamp(y, 96, 600);
+  const dur = e.type === 'speech' ? e.innerDur : e.dur - t0;
+  const tailX = clamp(h.x - x, 30, 440), tailBottom = h.y > y + 120;
+  box.innerHTML = `<div class="cloud" style="left:${x}px;top:${y}px;opacity:${a};transform:scale(${lerp(.6, 1, backOut((lt - t0) / 0.45))})">` +
+    `<span class="lb">${tr('속마음', 'INNER THOUGHT')}</span>${typed(e.inner, lt - t0, dur)}` +
+    (tailBottom ? `<i style="width:26px;height:26px;left:${tailX - 13}px;bottom:-34px"></i><i style="width:14px;height:14px;left:${tailX}px;bottom:-58px"></i>`
+      : `<i style="width:24px;height:24px;${h.x < x ? 'left:-30px' : 'right:-30px'};top:40px"></i>`) + `</div>`;
+}
+
+function stamp(text, color, x, y, lt, t0, rot = -12, size = 92, until = 1e9) {
+  const a = clamp((lt - t0) / 0.18) * (1 - clamp((lt - until) / 0.2));
+  if (a <= 0) return '';
+  const s = lerp(2.6, 1, easeIn(clamp((lt - t0) / 0.18))) + (lt - t0 > 0.18 ? 0.04 * Math.exp(-(lt - t0 - 0.18) * 8) : 0);
+  return `<div class="stamp disp" style="left:${x}px;top:${y}px;color:${color};border-color:${color};font-size:${size}px;opacity:${a};transform:translate(-50%,-50%) rotate(${rot}deg) scale(${s})">${text}</div>`;
+}
+
+function drawFx(e, lt, toS, st) {
+  const fx = document.getElementById('fx'), fxs = document.getElementById('fxs'), wipe = document.getElementById('wipe');
+  let html = '', shtml = '', whtml = '';
+  if (!e) { setHTML(fx, ''); setHTML(fxs, ''); setHTML(wipe, ''); return; }
+
+  // 지목: 흰 번쩍(0.15s) → 대각선 슬래시 와이프 → 반응샷 + 단어 카드(0.6s) + 붉은 조준선
+  if (e.type === 'speech' && e.callout) {
+    const x = lt - e.callout.at;
+    if (x >= 0 && x < 0.15) html += `<div class="flash" style="background:rgba(255,255,255,${1 - x / 0.15})"></div>`;
+    if (x >= 0 && x < 0.24) {
+      const p = x / 0.24, off = lerp(-2600, 2600, p);
+      whtml += `<div class="abs" style="left:0;top:-600px;width:900px;height:2400px;background:#0a0a0a;border-left:24px solid #E0141E;border-right:10px solid #fff;transform:translateX(${off}px) rotate(24deg)"></div>`;
+    }
+    if (x >= 0.1 && x < CALL_LEN) {
+      const p = toS(chest(e.callout.target)), q = ease((x - 0.1) / 0.3);
+      html += `<svg class="abs" style="left:${p.x - 230}px;top:${p.y - 230}px" width="460" height="460" opacity="${q * (1 - clamp((x - CALL_LEN + 0.25) / 0.25))}"><g transform="rotate(${x * 60} 230 230)" stroke="#E0141E" stroke-width="8" fill="none">` +
+        `<circle cx="230" cy="230" r="${lerp(210, 170, q)}"/><path d="M230 0V70M230 390V460M0 230H70M390 230H460"/></g></svg>`;
+    }
+    if (x >= 0.15 && x < 1.0) {
+      const a = clamp((x - 0.15) / 0.08) * (1 - clamp((x - 0.82) / 0.18));
+      const s = lerp(2.2, 1, easeIn(clamp((x - 0.15) / 0.12)));
+      const tp = toS(head(e.callout.target)), cx = tp.x >= 960 ? Math.max(560, tp.x - 620) : Math.min(1360, tp.x + 620);
+      html += `<div class="callcard" style="left:${cx}px;top:250px;opacity:${a};transform:translate(-50%,-50%) rotate(-8deg) scale(${s})"><div class="w disp">${tr('지목!', 'CALLED OUT!')}</div></div>`;
+    }
+  }
+  if (e.type === 'mafia_pick' || e.type === 'doctor_save' || e.type === 'police_check') {
+    const tp = toS(chest(e.target)), wp = toS(head(e.who));
+    const a = ease((lt - 0.4) / 0.5);
+    const col = e.type === 'mafia_pick' ? '#ff2b2b' : e.type === 'doctor_save' ? '#3BE37A' : '#3BA3FF';
+    shtml += `<svg class="abs" style="inset:0" width="1920" height="1080"><path d="M${wp.x},${wp.y} Q${(wp.x + tp.x) / 2},${Math.min(wp.y, tp.y) - 180} ${tp.x},${tp.y}" fill="none" stroke="${col}" stroke-width="6" stroke-dasharray="14 12" stroke-dashoffset="${-lt * 60}" opacity="${a * .9}"/></svg>`;
+    if (e.type === 'mafia_pick') {
+      const r = 120 - 30 * ease((lt - 0.6) / 0.6);
+      html += `<svg class="abs" style="left:${tp.x - 160}px;top:${tp.y - 160}px" width="320" height="320" opacity="${a}"><g transform="rotate(${lt * 90} 160 160)" stroke="#ff2b2b" stroke-width="7" fill="none"><circle cx="160" cy="160" r="${r}"/><path d="M160 ${160 - r - 30}V${160 - r + 26}M160 ${160 + r - 26}V${160 + r + 30}M${160 - r - 30} 160H${160 - r + 26}M${160 + r - 26} 160H${160 + r + 30}"/></g></svg>`;
+      html += stamp('TARGET', '#ff3b3b', tp.x, tp.y + 150, lt, 1.5, -8, 48);
+    } else if (e.type === 'doctor_save') {
+      const q0 = ease((lt - 0.6) / 0.8);
+      for (let j = 0; j < 3; j++) { const q = clamp(((lt - 0.6) * 1.2 - j * 0.3) % 1.2); html += `<div class="abs" style="left:${tp.x - 150}px;top:${tp.y - 150}px;width:300px;height:300px;border-radius:50%;border:6px solid #3BE37A;opacity:${(1 - q) * q0};transform:scale(${0.4 + q})"></div>`; }
+      html += `<div class="abs" style="left:${tp.x - 70}px;top:${tp.y - 90}px;font-size:140px;opacity:${q0};transform:scale(${backOut((lt - 0.6) / 0.5)})">🛡️</div>`;
+    } else {
+      const scan = clamp((2.3 - lt) / 0.3) * a;
+      const mx = tp.x - 120 + 240 * (0.5 + 0.5 * Math.sin((lt - 0.4) * 4));
+      html += `<div class="abs" style="left:${mx - 70}px;top:${tp.y - 120}px;font-size:120px;opacity:${scan}">🔍</div>`;
+      html += `<div class="abs" style="left:${tp.x - 130}px;top:${tp.y - 180 + 300 * ((lt * 1.4) % 1)}px;width:260px;height:6px;background:#3BA3FF;box-shadow:0 0 20px #3BA3FF;opacity:${scan}"></div>`;
+      const maf = e.result === '마피아';
+      html += stamp(maf ? 'MAFIA!' : 'CLEAN', maf ? '#ff3b3b' : '#3BA3FF', tp.x, tp.y, lt, 2.3);
+      if (lt > 2.4) html += `<div class="abs" style="left:${tp.x - 100}px;top:${tp.y + 72}px;font:900 18px 'Noto Sans KR';background:#000b;padding:2px 10px;border-radius:8px">${tr('시청자만 보는 정보', 'viewers only')}</div>`;
+    }
+  }
+  if (e.type === 'death') {
+    const p = toS(chest(e.who));
+    const fl = lt > 0.9 ? Math.max(0, 1 - (lt - 0.9) / 0.6) : 0;
+    html += `<div class="flash" style="background:rgba(255,20,20,${0.55 * fl})"></div>`;
+    let svg = `<svg class="abs" style="left:${p.x - 200}px;top:${p.y - 220}px" width="400" height="440">`;
+    for (let j = 0; j < 3; j++) {
+      const q = clamp((lt - 0.9 - j * 0.09) / 0.16), x0 = 90 + j * 80;
+      svg += `<path d="M${x0} 30 Q${x0 + 40} 220 ${x0 + 20} 410" stroke="#ff1f1f" stroke-width="${22 - j * 3}" stroke-linecap="round" fill="none" pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1 - q}" style="filter:drop-shadow(0 0 12px #ff0000)"/>`;
+    }
+    html += svg + '</svg>' + stamp('ELIMINATED', '#ff3b3b', 960, 470, lt, 1.6, -10, 104);
+  }
+  if (e.type === 'no_death') {
+    if (e.saved) {
+      const p = toS(chest(e.saved));
+      for (let j = 0; j < 4; j++) { const q = clamp((lt - 0.4 - j * 0.18) / 0.9); if (q > 0) html += `<div class="abs" style="left:${p.x - 200}px;top:${p.y - 200}px;width:400px;height:400px;border-radius:50%;border:8px solid #3BE37A;opacity:${1 - q};transform:scale(${0.3 + q * 1.2})"></div>`; }
+      html += `<div class="abs" style="left:${p.x - 80}px;top:${p.y - 110}px;font-size:160px;opacity:${ease((lt - 0.4) / 0.3)};transform:scale(${backOut((lt - 0.4) / 0.5)})">🛡️</div>`;
+      html += stamp('SAVED!', '#3BE37A', 960, 470, lt, 1.4, -8, 110);
+    } else html += stamp('NO KILL', '#FFD24A', 960, 470, lt, 1.0, -8, 96);
+  }
+  if (e.type === 'vote') {
+    const a = toS(head(e.who)), b = toS(head(e.target));
+    const q = clamp((lt - 0.1) / 0.6);
+    html += `<svg class="abs" style="inset:0" width="1920" height="1080"><defs><marker id="ah" markerWidth="10" markerHeight="10" refX="6" refY="5" orient="auto"><path d="M0,0 L10,5 L0,10 z" fill="#FF5A3B"/></marker></defs>` +
+      `<path d="M${a.x},${a.y} Q${(a.x + b.x) / 2},${Math.min(a.y, b.y) - 220} ${b.x},${b.y}" fill="none" stroke="#FF5A3B" stroke-width="9" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="${1 - q}" marker-end="${q > 0.95 ? 'url(#ah)' : ''}" style="filter:drop-shadow(0 0 10px #ff5a3b)"/></svg>`;
+    if (lt >= 0.7) html += `<div class="abs disp" style="left:${b.x - 40}px;top:${b.y - 130 - 30 * ease((lt - 0.7) / 0.4)}px;font-size:66px;color:#FF5A3B;text-shadow:0 0 16px #000;opacity:${clamp(1.5 - (lt - 0.7))}">+1</div>`;
+  }
+  if (e.type === 'execute') {
+    const p = toS(chest(e.who)), i = seatOf[e.who];
+    if (lt > 2.8) {
+      const flip = ease((lt - 3.0) / 0.8), ang = 180 - 180 * flip, r = e.role, rc = ROLE_COLOR[r];
+      html += `<div class="flash" style="background:rgba(0,0,0,${0.6 * ease((lt - 2.8) / 0.3)})"></div>`;
+      html += `<div class="card" style="transform:scale(${backOut((lt - 2.8) / 0.4)}) rotateY(${ang}deg)">` +
+        `<div class="front" style="background:linear-gradient(${r === '마피아' ? '#4a0d14,#1a0508' : '#0d1f3a,#060b14'});border-color:${rc}">${IMG(P[e.who], 240)}<b class="disp" style="color:${rc}">${ROLE_ICON[r]} ${ROLE_NAME[r]}</b><span style="font:700 21px 'JetBrains Mono'">${D(e.who)} · ${esc(P[e.who].model)}</span></div>` +
+        `<div class="backf disp">?</div></div>`;
+      if (lt > 4.0) html += stamp(r === '마피아' ? tr('마피아 검거!', 'MAFIA CAUGHT!') : tr('시민이었다…', 'WAS INNOCENT…'), r === '마피아' ? '#3BE37A' : '#ff3b3b', 960, 900, lt, 4.0, -6, 68);
+    }
+  }
+  if (e.type === 'no_execute') html += stamp(tr('동률! 처형 없음', 'TIE! NO EXECUTION'), '#FFD24A', 960, 480, lt, 0.4, -8, 92);
+  if (e.type === 'end') {
+    const win = String(e.winner || (G.result && G.result.winner) || '');
+    const mafiaWin = win.includes('마피아'), townWin = win.includes('시민');
+    const col = mafiaWin ? '#ff3b3b' : '#3BE37A';
+    html += `<div class="flash" style="background:radial-gradient(ellipse at 50% 45%, ${mafiaWin ? 'rgba(120,0,0,.55)' : 'rgba(0,90,40,.5)'}, rgba(0,0,0,.75));opacity:${ease(lt / 0.5)}"></div>`;
+    const cols = ['#FFD24A', '#ff3b3b', '#3BE37A', '#3BA3FF', '#D97757', '#9B5CFF', '#39FF88'];
+    for (let j = 0; j < 140; j++) {
+      const x = hash(j) * 1920, v = 260 + hash(j + 7) * 420, y = -60 + (lt - 0.6) * v - hash(j + 3) * 500;
+      if (y < -40 || lt < 0.6) continue;
+      html += `<div class="abs" style="left:${x + Math.sin(lt * 3 + j) * 40}px;top:${y}px;width:14px;height:22px;background:${cols[j % 7]};transform:rotate(${lt * 300 * (hash(j + 1) - .5)}deg)"></div>`;
+    }
+    const title = mafiaWin ? tr('🕶️ 마피아 팀 승리', '🕶️ MAFIA WINS') : townWin ? tr('🎉 시민 팀 승리', '🎉 TOWN WINS') : esc(win);
+    html += `<div class="abs disp" style="left:0;right:0;top:290px;text-align:center;font-size:140px;color:${col};text-shadow:0 8px 0 #000, 0 0 50px ${col};transform:scale(${backOut(lt / 0.6)})">${title}</div>`;
+    const ms = SEATS.filter(c => P[c].role === '마피아').map(c => `<span style="color:${P[c].color}">${D(c)}</span> (${esc(P[c].model)})`).join(' · ');
+    html += `<div class="abs" style="left:0;right:0;top:500px;text-align:center;font:900 40px 'Noto Sans KR';opacity:${ease((lt - 1.2) / 0.5)}">${tr('마피아는', 'The Mafia:')} ${ms}</div>`;
+  }
+  setHTML(fx, html); setHTML(fxs, shtml); setHTML(wipe, whtml);
+}
+
+// ================= intro_cast =================
+// Intro rows: one row per team (players.json "team"), max 3 rows; otherwise split players evenly into 3 rows
+const byKey = {}; Object.entries(P).forEach(([c, v]) => byKey[v.key] = c);
+let GROUPS = [];
+SEATS.forEach(c => { const tm = P[c].company; let g = GROUPS.find(x => x[0] === tm); if (!g) GROUPS.push(g = [tm, P[c].color, []]); g[2].push(P[c].key); });
+if (GROUPS.length > 3 || GROUPS.some(g => g[2].length > 5)) {
+  const keys = SEATS.map(c => P[c].key), per = Math.ceil(keys.length / 3);
+  GROUPS = [0, 1, 2].map(i => ['', '#FFD24A', keys.slice(i * per, (i + 1) * per)]).filter(g => g[2].length);
+}
+const TEAMS = [...new Set(SEATS.map(c => P[c].company))];
+const ROLE_COUNT = ['마피아', '경찰', '의사', '시민'].map(r => [r, SEATS.filter(c => P[c].role === r).length]).filter(x => x[1]);
+document.getElementById('i-h1').textContent = tr(`AI ${SEATS.length}명 마피아 게임`, `${SEATS.length} AIs PLAY MAFIA`);
+document.getElementById('i-sub').textContent = TEAMS.join(' · ');
+document.getElementById('i-roletitle').textContent = tr('역할 구성', 'THE ROLES');
+document.getElementById('i-rolebox').innerHTML = ROLE_COUNT.map(([r, cnt]) =>
+  `<div class="rtok" style="border-color:${ROLE_COLOR[r]}"><div class="ic">${ROLE_ICON[r]}</div><b class="disp" style="color:${ROLE_COLOR[r]}">${ROLE_NAME[r]}</b><span>× ${cnt}</span></div>`).join('');
+const rowsEl = document.getElementById('i-rows');
+const ROW_TOP = GROUPS.length === 3 ? [90, 390, 690] : GROUPS.length === 2 ? [230, 560] : [390];
+GROUPS.forEach(([team, color, keys], gi) => {
+  const r = document.createElement('div'); r.className = 'grow'; r.id = 'g-' + gi; r.style.top = ROW_TOP[gi] + 'px';
+  r.innerHTML = (team ? `<div class="co disp"><span style="color:${color}">${esc(team)}</span></div>` : '') + keys.map((k, j) => {
+    const c = byKey[k], pl = P[c], tag = tr(pl.tagline, pl.tagline_en) || '';
+    return `<div class="ccard" id="cc-${gi}-${j}" style="border-color:${pl.color}">${IMG(pl, 190, 'style="margin:0 0 16px 12px"')}<div class="lb"><b style="color:${pl.color}">${D(c)}</b><span>${esc(pl.model)}</span><em>${esc(tag)}</em></div></div>`;
+  }).join('');
+  rowsEl.appendChild(r);
+});
+document.getElementById('i-rules').innerHTML =
+  `<div class="ir" data-t="17.2">${tr('🎲 사회자는 <code>Python 스크립트</code> · 사람 개입 없음', '🎲 Game master: a <code>Python script</code> · no human input')}</div>` +
+  `<div class="ir" data-t="18.2">${tr('🙈 서로 누가 어떤 AI인지 모른다', '🙈 Nobody knows which AI is which')}</div>` +
+  `<div class="ir" data-t="19.2">${tr('🌙 밤 → ☀️ 아침 → 💬 토론 → 🗳️ 투표 → ⚖️ 처형', '🌙 Night → ☀️ Morning → 💬 Talk → 🗳️ Vote → ⚖️ Execution')}</div>`;
+
+document.getElementById('i-score').innerHTML = `<h2 class="disp">${tr('최종 우승 정하는 법', 'HOW THE WINNER IS DECIDED')}</h2><div class="sgrid">` +
+  [['+3', tr('이긴 팀', 'on the winning team')], ['+1', tr('끝까지 생존', 'survived to the end')], ['+1', tr('마피아를 맞힌 투표마다', 'per vote on a Mafia')], ['+2', tr('마피아인데 처형 안 당함', 'Mafia, never executed')]]
+    .map(([n, l], j) => `<div class="sitem" id="si-${j}"><b>${n}</b><span>${l}</span></div>`).join('') +
+  `</div><p>${tr('여러 판 점수를 더해 1명', 'points added over several games · one winner')}</p>`;
+
+function drawIntro(t) {
+  const ti = document.getElementById('i-title');
+  ti.style.opacity = ease(t / 0.6) * (1 - ease((t - 2.2) / 0.4));
+  ti.style.transform = `scale(${lerp(1.3, 1, backOut(t / 0.7))})`;
+  const out = ease((t - 15.2) / 0.5);
+  GROUPS.forEach((g, gi) => {
+    const t0 = 2.6 + gi * (12.3 / GROUPS.length), r = document.getElementById('g-' + gi);
+    r.style.opacity = ease((t - t0) / 0.4) * (1 - out);
+    r.style.transform = `translateX(${(1 - ease((t - t0) / 0.6)) * -120}px)`;
+    for (let j = 0; j < g[2].length; j++) {
+      const c = document.getElementById(`cc-${gi}-${j}`), q = (t - t0 - 0.5 - j * 0.45) / 0.5;
+      c.style.opacity = ease(q);
+      c.style.transform = `translateY(${(1 - ease(q)) * 60}px) scale(${lerp(.85, 1, backOut(q))})`;
+    }
+  });
+  const rb = document.getElementById('i-roles');
+  rb.style.opacity = ease((t - 15.6) / 0.5) * (1 - ease((t - 21.6) / 0.4));
+  const sc = document.getElementById('i-score');
+  sc.style.opacity = ease((t - 22.0) / 0.4);
+  sc.querySelector('h2').style.transform = `scale(${lerp(1.3, 1, backOut((t - 22.0) / 0.5))})`;
+  for (let j = 0; j < 4; j++) { const q = (t - 22.4 - j * 0.3) / 0.45, el = document.getElementById('si-' + j); el.style.opacity = ease(q); el.style.transform = `translateY(${(1 - ease(q)) * 40}px) scale(${lerp(.8, 1, backOut(q))})`; }
+  sc.querySelector('p').style.opacity = ease((t - 23.8) / 0.5) * 0.8;
+  rb.querySelectorAll('.rtok').forEach((el, j) => { const q = (t - 15.9 - j * 0.3) / 0.45; el.style.opacity = ease(q); el.style.transform = `scale(${lerp(.5, 1, backOut(q))})`; });
+  rb.querySelectorAll('.ir').forEach(el => { const q = (t - +el.dataset.t) / 0.5; el.style.opacity = ease(q); el.style.transform = `translateY(${(1 - ease(q)) * 20}px)`; });
+}
+
+// ================= awards =================
+const S = window.SEASON;
+const AW = { title: 3, per: 3.0 };
+function metricText(a) {
+  const v = a.value, pct = x => Math.round(x * 100) + '%';
+  switch (a.metric) {
+    case 'detect_rate': return tr(`마피아 적중률 ${pct(v)}`, `Mafia hit rate ${pct(v)}`);
+    case 'mafia_hidden': return tr(`마피아로 끝까지 안 걸림 ${v}판`, `Never caught as Mafia (${v} game${v > 1 ? 's' : ''})`);
+    case 'avg_chars': return tr(`발언 평균 ${v}자`, `${v} characters per line`);
+    case 'citizen_votes_received': return tr(`시민인데 받은 표 ${v}표`, `${v} votes received while innocent`);
+    case 'majority_rate': return a.award_en === 'Lone Wolf' ? tr(`다수와 다른 투표 ${pct(1 - v)}`, `Voted against the crowd ${pct(1 - v)}`) : tr(`다수 따라 투표 ${pct(v)}`, `Voted with the majority ${pct(v)}`);
+    case 'alive_games': return tr(`${NRUN}판 중 ${v}판 생존`, `Survived ${v} of ${NRUN} games`);
+    case 'votes_received': return tr(`받은 표 총 ${v}표`, `${v} votes received`);
+    default: return `${a.metric} ${v}`;
+  }
+}
+const SP = k => S.players[k];
+const NRUN = S ? (S.runs || []).length : 0;
+const sName = k => L === 'en' ? SP(k).char_en : SP(k).char;
+function confetti(t0, t, n = 150) {
+  let h = '';
+  const cols = ['#FFD24A', '#ff3b3b', '#3BE37A', '#3BA3FF', '#D97757', '#9B5CFF', '#39FF88'];
+  for (let j = 0; j < n; j++) {
+    const v = 240 + hash(j + 7) * 420, y = -60 + (t - t0) * v - hash(j + 3) * 600;
+    if (y < -40 || t < t0) continue;
+    h += `<div class="abs" style="left:${hash(j) * 1920 + Math.sin(t * 3 + j) * 40}px;top:${y}px;width:14px;height:22px;background:${cols[j % 7]};transform:rotate(${t * 300 * (hash(j + 1) - .5)}deg)"></div>`;
+  }
+  return h;
+}
+function drawAwards(t) {
+  const root = document.getElementById('aw');
+  if (!S) { setHTML(root, `<div class="aw-title" style="top:460px"><p>data/season.js 없음 (build.py --season)</p></div>`); return; }
+  let h = '';
+  const nA = S.awards.length, tBoard = AW.title + nA * AW.per, tDrum = tBoard + 8, tStill = tDrum + 2.5, tWin = tStill + 1.0;
+  // 1) 타이틀
+  if (t < AW.title + 0.4) {
+    const a = ease(t / 0.5) * (1 - ease((t - AW.title + 0.4) / 0.4));
+    h += `<div class="aw-title" style="top:330px;opacity:${a};transform:scale(${lerp(1.35, 1, backOut(t / 0.7))})"><h1 class="disp">${tr('시상식', 'AWARDS')}</h1><p>${(S.runs || []).join(' · ')} · ${tr(`${NRUN}판 결과`, `results of ${NRUN} games`)}</p></div>`;
+  }
+  // 2) 상 카드 (한 명씩)
+  if (t >= AW.title && t < tBoard + 0.4) {
+    const i = Math.min(nA - 1, Math.floor((t - AW.title) / AW.per)), u = t - AW.title - i * AW.per, a = S.awards[i], pl = SP(a.model_key);
+    const enter = ease(u / 0.45), exit = i < nA - 1 ? ease((u - AW.per + 0.35) / 0.35) : ease((t - tBoard) / 0.4);
+    const col = pl.color;
+    h += `<div class="awcard" style="--c:${col};border-color:${col};opacity:${enter * (1 - exit)};transform:translateX(${(1 - enter) * 300 - exit * 300}px) scale(${lerp(.92, 1, enter)})">` +
+      `<div class="glow"></div><div class="ped" style="transform:translateY(${(1 - backOut((u - 0.1) / 0.5)) * 60}px)">${IMG(pl, 460)}</div>` +
+      `<div class="txt"><div class="no">🏆 AWARD ${i + 1} / ${nA}</div><div class="aw disp" style="transform:scale(${lerp(1.25, 1, backOut((u - 0.2) / 0.4))});transform-origin:left center">${esc(L === 'en' ? a.award_en : a.award)}</div>` +
+      `<div class="who" style="color:${pl.color}">${esc(sName(a.model_key))}</div><div class="md" style="color:${pl.color}">${esc(pl.model)}</div>` +
+      `<div class="metric" style="opacity:${ease((u - 0.6) / 0.4)}">${esc(metricText(a))}</div></div></div>`;
+    h += `<div class="awdots">${S.awards.map((_, j) => `<i class="${j <= i ? 'on' : ''}"></i>`).join('')}</div>`;
+  }
+  // 3) 누적 점수판 → 드럼롤 → 정적
+  if (t >= tBoard && t < tWin + 0.3) {
+    const order = Object.keys(S.players); // fixed config order (so the champion is not revealed by sorting)
+    const max = Math.max(...order.map(k => SP(k).points));
+    const champRow = order.indexOf(S.champion);
+    const a = ease((t - tBoard - 0.3) / 0.5) * (1 - ease((t - tStill) / 0.4));
+    let hl = -1;
+    if (t >= tDrum && t < tStill) hl = Math.floor(lerp(0, 3 * order.length + champRow, ease((t - tDrum) / (tStill - tDrum - 0.3)))) % order.length;
+    h += `<div class="aw-title" style="top:70px;opacity:${a}"><h1 class="disp" style="font-size:80px">${tr(`${NRUN}판 누적 점수`, `TOTAL POINTS · ${NRUN} GAMES`)}</h1></div><div class="board" style="opacity:${a}">` +
+      order.map((k, r) => {
+        const pl = SP(k), q = ease((t - tBoard - 0.8 - r * 0.18) / 1.6), dim = hl >= 0 && hl !== r;
+        return `<div class="brow" style="opacity:${dim ? .35 : 1};background:${hl === r ? '#FFD24A22' : 'transparent'}"><div class="face" style="border-color:${pl.color}">${IMG(pl, 52)}</div>` +
+          `<div class="nm"><b style="color:${pl.color}">${esc(sName(k))}</b><i style="color:${pl.color}">${esc(pl.model)}</i></div>` +
+          `<div class="bar" style="width:${(pl.points / max) * 820 * q}px;background:linear-gradient(90deg,${pl.color}99,${pl.color})"></div><div class="pt">${Math.round(pl.points * q)}</div></div>`;
+      }).join('') + '</div>';
+    if (t >= tDrum && t < tStill) h += `<div class="flash" style="background:radial-gradient(ellipse at 50% 50%, transparent 30%, rgba(0,0,0,${0.5 * ease((t - tDrum) / 0.5)}) 100%)"></div>`;
+  }
+  if (t >= tStill && t < tWin) {
+    h += `<div class="flash" style="background:#000"></div><div class="aw-title" style="top:470px;opacity:${ease((t - tStill - 0.1) / 0.3)}"><p style="font:900 56px 'Noto Sans KR';opacity:1">${tr('최종 우승은…', 'And the winner is…')}</p></div>`;
+  }
+  // 4) 최종 우승
+  if (t >= tWin) {
+    const k = S.champion, pl = SP(k), x = t - tWin, col = pl.color;
+    h += `<div class="flash" style="background:radial-gradient(ellipse at 50% 46%, ${col}33 0%, rgba(0,0,0,.86) 58%)"></div>`;
+    h += `<div class="abs" style="left:610px;top:0;width:700px;height:1000px;clip-path:polygon(38% 0,62% 0,100% 100%,0 100%);background:linear-gradient(#fff4e099, #fff4e000);opacity:${ease(x / 0.4) * 0.55}"></div>`;
+    h += `<div class="abs" style="left:0;right:0;top:${250 - 30 * ease(x / 0.8)}px;text-align:center;opacity:${ease(x / 0.4)}">${pl.img ? `<img src="${esc(pl.img)}" style="height:560px;filter:drop-shadow(0 0 40px ${col}aa) drop-shadow(0 20px 30px #000)">` : `<div style="display:inline-block;margin-top:120px">${IMG(pl, 420)}</div>`}</div>`;
+    const cy = lerp(-300, 26, ease((x - 0.6) / 0.9)) + (x > 1.5 ? -8 * Math.abs(Math.sin((x - 1.5) * 6)) * Math.exp(-(x - 1.5) * 3) : 0);
+    h += `<div class="abs" style="left:0;right:0;top:${cy}px;text-align:center;font-size:190px;filter:drop-shadow(0 0 30px #FFD24A)">👑</div>`;
+    h += confetti(tWin + 1.4, t);
+    h += `<div class="champ" style="top:800px;opacity:${ease((x - 1.6) / 0.4)};transform:scale(${lerp(1.3, 1, backOut((x - 1.6) / 0.5))})">` +
+      `<div class="disp" style="font-size:96px;color:#FFD24A;text-shadow:0 6px 0 #000">${tr('최종 우승', 'CHAMPION')}</div>` +
+      `<div style="font:900 44px 'Noto Sans KR';margin-top:4px"><span style="color:${pl.color}">${esc(sName(k))}</span> · <span class="mono" style="color:${pl.color}">${esc(pl.model)}</span> · ${pl.points}${tr('점', ' pts')}</div></div>`;
+    h += `<div class="disc" style="bottom:28px;opacity:${ease((x - 4.0) / 0.6) * 0.92}">${tr(`${NRUN}판뿐이라 모델 실력 순위는 아닙니다`, `Only ${NRUN} game${NRUN > 1 ? 's' : ''} played - this is not a ranking of model ability`)}</div>`;
+  }
+  setHTML(root, h);
+}
+
+// ================= arch =================
+const faces = keys => `<div class="faces">${keys.map(k => `<span>${IMG(P[byKey[k]], 28)}${esc(P[byKey[k]].model)}</span>`).join('')}</div>`;
+// CLI boxes: players grouped by the command they run (max 3 boxes; extra groups join the third)
+const CLI_LABEL = { claude: 'claude -p', agy: 'agy -p', codex: 'codex exec' };
+const CLIS = [];
+SEATS.forEach(c => { const k = P[c].cli || P[c].company; let g = CLIS.find(x => x[0] === k); if (!g) CLIS.push(g = [k, P[c].color, []]); g[2].push(P[c].key); });
+while (CLIS.length > 3) { const x = CLIS.pop(); CLIS[2][0] += ' / ' + x[0]; CLIS[2][2].push(...x[2]); }
+const cliBox = i => CLIS[i] ? `<div class="c" style="color:${CLIS[i][1]}">$ ${esc(CLI_LABEL[CLIS[i][0]] || CLIS[i][0])}</div>${faces(CLIS[i][2])}` : null;
+// [left, top, width, 등장 시각, 테두리색, html]
+const BOXES = [
+  [60, 34, 1100, 0, null, `<div class="atitle disp" style="position:static">${tr('어떻게 돌아가나', 'HOW IT WORKS')} <small>architecture · data flow</small></div>`, true],
+  [60, 130, 400, 0.6, '#FFD24A', `<h5>🎲 ${tr('사회자', 'Game master')}</h5><div class="c">mafia_game.py</div><div class="s">${tr('Python · 역할 배정 · 진행 · 판정', 'Python · roles · turns · rulings')}</div><span class="pill" style="background:#FFD24A;color:#111">${tr('사람 개입 없음', 'no human in the loop')}</span>`],
+  [60, 330, 400, 3.2, null, `<h5>📜 ${tr('규칙', 'Rules')}</h5><div class="s">${tr('모두 같은 규칙', 'same for everyone')}</div>`],
+  [60, 430, 400, 3.8, null, `<h5>🗂️ ${tr('공개 기록', 'Public log')}</h5><div class="s">${tr('발언 · 투표 · 사망 (모두가 봄)', 'speeches · votes · deaths (everyone sees)')}</div>`],
+  [60, 530, 400, 4.4, 'var(--mafia)', `<h5>🔒 ${tr('비밀 정보', 'Secret info')}</h5><div class="s">${tr('그 플레이어만 봄', 'only that player sees')}</div>`],
+  [500, 330, 310, 5.6, '#B597FF', `<h5>✉️ ${tr('프롬프트', 'Prompt')}</h5><div class="s" style="margin-bottom:8px">${tr('플레이어마다 다름', 'different per player')}</div>` +
+    `<div class="s sub" data-t="6.4">🕶️ ${tr('마피아: <b>동료 이름</b>', 'Mafia: <b>partner</b>')}</div><div class="s sub" data-t="7.0">🔍 ${tr('경찰: <b>조사 결과</b>', 'Detective: <b>results</b>')}</div>` +
+    `<div class="s sub" data-t="7.6">💉 ${tr('의사: <b>지킨 기록</b>', 'Doctor: <b>saves</b>')}</div><div class="s sub" data-t="8.2">🙂 ${tr('시민: <b>자기 역할만</b>', 'Citizen: <b>own role only</b>')}</div>` +
+    `<span class="pill sub" data-t="8.6" style="background:#8A5CFF">${tr('정보 비대칭', 'information asymmetry')}</span>`],
+  ...[0, 1, 2].filter(i => CLIS[i]).map(i => [870, [120, 280, 440][i], 450, 9.4 + 0.6 * i, CLIS[i][1], cliBox(i)]),
+  [870, 604, 460, 11.4, 'transparent', `<div class="s mono" style="opacity:.9">${tr('빈 임시 폴더 · 도구 없음 · 같은 프롬프트', 'empty temp dir · no tools · same prompt')}</div>`],
+  [1390, 120, 470, 16.0, '#8FD3FF', `<h5>↩️ ${tr('응답 JSON', 'JSON reply')}</h5><div class="json"><span class="p">{</span><span class="k">"speech"</span>: <span class="v">"${tr('여우 님, 근거가 뭔가요?', 'Fox, what is your proof?')}"</span>,\n <span class="k">"emotion"</span>: <span class="v">"${tr('의심', 'suspicious')}"</span>,\n <span class="k">"inner"</span>: <span class="v">"${tr('정체는 숨긴다', 'keep my role hidden')}"</span><span class="p">}</span>\n<span class="p">{</span><span class="k">"vote"</span>: <span class="v">"${tr('여우', 'Fox')}"</span>, <span class="k">"reason"</span>: <span class="v">"…"</span>, <span class="k">"inner"</span>: <span class="v">"…"</span><span class="p">}</span></div>`],
+  [1390, 375, 470, 18.0, 'var(--doctor)', `<h5>✅ ${tr('검증', 'Validate')}</h5><div class="s">${tr('JSON 형식 · 대상이 살아 있는 사람인지', 'JSON shape · target is alive')}</div><span class="pill sub" data-t="19.2" style="background:#3a1515;color:#ff9b9b;border:1px solid #ff6b6b">${tr('실패 → 재시도 ×2 · 대체 모델 없음', 'fail → retry ×2 · no fallback model')}</span>`],
+  [1390, 545, 225, 21.6, '#FFD24A', `<div class="c">calls.json</div><div class="s">${tr('호출 캐시 · 이어 하기 · seed 재현', 'call cache · resume · seed replay')}</div>`],
+  [1640, 545, 220, 23.0, '#FFD24A', `<div class="c">events.json</div><div class="s">${tr('영상용 이벤트', 'events for video')}</div>`],
+  [60, 712, 110, 25.2, 'transparent', `<div class="s" style="font-weight:900;opacity:1">🎬 ${tr('영상', 'Video')}</div>`],
+  [170, 690, 220, 25.4, null, `<div class="c">build.py</div><div class="s">${tr('타임라인', 'timeline')}</div>`],
+  [470, 690, 220, 26.0, null, `<div class="c">index.html</div><div class="s">${tr('게임 화면', 'game screen')}</div>`],
+  [770, 690, 330, 26.6, null, `<div class="c">window.seek(t)</div><div class="s">${tr('프레임 단위 캡처 · 화면 녹화', 'frame capture · screen recording')}</div>`],
+  [1180, 690, 200, 27.2, null, `<div class="c">ffmpeg</div><div class="s">H.264</div>`],
+  [1460, 690, 300, 27.8, null, `<div class="c">${tr('편집 프로그램', 'Video editor')}</div><div class="s">${tr('편집 · 자막 · 음량', 'edit · subtitles · loudness')}</div>`],
+  [40, 882, 130, 28.6, 'transparent', `<div class="s" style="font-weight:900;opacity:1">🔊 ${tr('음성', 'Voice')}</div>`],
+  [170, 860, 220, 28.8, null, `<div class="c">lines.json</div><div class="s">${tr('대사 목록', 'lines to speak')}</div>`],
+  [470, 860, 330, 29.4, '#B597FF', `<div class="c">TTS</div><div class="s">${tr(`원하는 TTS · 목소리 ${SEATS.length}개`, `any TTS · ${SEATS.length} voices`)}</div>`],
+  [880, 860, 260, 30.0, null, `<div class="c">*.wav</div><div class="s">${tr('길이 → 타임라인 · mix_audio.py', 'durations → timeline · mix_audio.py')}</div>`],
+];
+document.getElementById('arch-boxes').innerHTML = BOXES.map(([x, y, w, t0, bc, h, plain], i) =>
+  `<div class="${plain ? 'abs' : 'box'} a" data-t="${t0}" style="left:${x}px;top:${y}px;width:${w}px;${bc ? `border-color:${bc};` : ''}${bc === 'transparent' ? 'background:none;' : ''}">${h}</div>`).join('');
+// 화살표: [d, 그리기 시작, 끝, 색]
+const ARROWS = [
+  ['M260,250 L260,330', 2.8, 3.2, '#FFD24A'],
+  ['M460,385 C480,385 480,420 500,420', 5.2, 5.8, '#B597FF'],
+  ['M460,485 C480,485 480,480 500,480', 5.2, 5.8, '#B597FF'],
+  ['M460,585 C480,585 480,540 500,540', 5.2, 5.8, '#B597FF'],
+  ['M810,440 C840,440 840,180 870,180', 9.4, 10.0, '#D97757'],
+  ['M810,480 C840,480 840,340 870,340', 10.0, 10.6, '#7d6bff'],
+  ['M810,520 C840,520 840,500 870,500', 10.6, 11.2, '#39FF88'],
+  ['M1320,180 C1355,180 1355,210 1390,210', 15.4, 16.0, '#D97757'],
+  ['M1320,340 C1355,340 1355,235 1390,235', 15.6, 16.2, '#7d6bff'],
+  ['M1320,500 C1355,500 1355,260 1390,260', 15.8, 16.4, '#39FF88'],
+  ['M1625,342 L1625,375', 17.6, 18.0, '#3BE37A'],
+  ['M1500,490 L1500,545', 21.2, 21.6, '#FFD24A'],
+  ['M1615,595 L1640,595', 22.6, 23.0, '#FFD24A'],
+  ['M1750,628 L1750,662 L280,662 L280,690', 24.6, 25.4, '#FFD24A'],
+  ['M390,730 L470,730', 25.8, 26.1, '#8FD3FF'],
+  ['M690,730 L770,730', 26.4, 26.7, '#8FD3FF'],
+  ['M1100,730 L1180,730', 27.0, 27.3, '#8FD3FF'],
+  ['M1380,730 L1460,730', 27.6, 27.9, '#8FD3FF'],
+  ['M1830,628 L1830,838 L280,838 L280,860', 28.4, 29.2, '#B597FF'],
+  ['M390,900 L470,900', 29.2, 29.5, '#B597FF'],
+  ['M800,900 L880,900', 29.8, 30.1, '#B597FF'],
+  ['M1010,860 L1010,810 L330,810 L330,772', 30.4, 31.2, '#FFD24A'],
+];
+[2, 1].forEach(i => { if (!CLIS[i]) { ARROWS[4 + i][1] = ARROWS[7 + i][1] = 1e9; ARROWS[4 + i][2] = ARROWS[7 + i][2] = 1e9 + 1; } });
+const svgA = document.getElementById('arch-svg');
+svgA.innerHTML = ARROWS.map(([d, , , c], i) => `<path id="ar-${i}" d="${d}" fill="none" stroke="${c}" stroke-width="3.5" stroke-linecap="round" pathLength="1" stroke-dasharray="1" stroke-dashoffset="1"/>`).join('') +
+  ARROWS.map((a, i) => [0, 1, 2].map(j => `<circle id="pk-${i}-${j}" r="6" fill="${a[3]}" style="filter:drop-shadow(0 0 6px ${a[3]})"/>`).join('')).join('');
+const arPaths = ARROWS.map((a, i) => document.getElementById('ar-' + i));
+const arLen = arPaths.map(p => p.getTotalLength());
+
+function drawArch(t) {
+  document.querySelectorAll('#s-arch .a, #s-arch .sub').forEach(el => {
+    const q = (t - +el.dataset.t) / 0.45;
+    el.style.opacity = ease(q);
+    el.style.transform = `translateY(${(1 - ease(q)) * 18}px)`;
+  });
+  ARROWS.forEach(([, t0, t1], i) => {
+    const p = clamp((t - t0) / (t1 - t0));
+    arPaths[i].setAttribute('stroke-dashoffset', 1 - p);
+    for (let j = 0; j < 3; j++) {
+      const c = document.getElementById(`pk-${i}-${j}`);
+      if (p < 1) { c.setAttribute('opacity', 0); continue; }
+      const pt = arPaths[i].getPointAtLength((((t - t1) * 0.55 + j / 3) % 1) * arLen[i]);
+      c.setAttribute('cx', pt.x); c.setAttribute('cy', pt.y); c.setAttribute('opacity', 0.95);
+    }
+  });
+  const R = G.result, nums = document.getElementById('a-nums');
+  const q = ease((t - 32.6) / 0.6);
+  if (q <= 0 || !R) { nums.innerHTML = ''; return; }
+  const totalSec = Object.values(R.sec_by_model || {}).reduce((a, b) => a + b, 0);
+  const avg = R.calls ? totalSec / R.calls : 0;
+  const cards = [[R.calls, tr('한 판 호출 수', 'calls per game'), '#FFD24A'], [avg.toFixed(1) + 's', tr('평균 응답 시간', 'avg response'), '#8FD3FF'], [R.failed_calls ?? 0, tr('실패 호출', 'failed calls'), '#3BE37A']];
+  nums.innerHTML = `<div class="flash" style="background:rgba(4,6,12,${0.82 * q})"></div>` + cards.map(([v, l, c], j) => {
+    const x = (t - 33.0 - j * 0.35) / 0.5, qq = ease(x);
+    const shown = typeof v === 'number' ? Math.round(v * qq) : v;
+    return `<div class="numcard" style="left:${180 + j * 560}px;top:330px;border-color:${c};opacity:${qq};transform:scale(${lerp(.7, 1, backOut(x))})"><b style="color:${c}">${shown}</b><span>${l}</span></div>`;
+  }).join('') + `<div class="abs" style="left:0;right:0;top:620px;text-align:center;opacity:${ease((t - 34.4) / 0.5)}">` +
+    Object.entries(R.sec_by_model || {}).map(([m, s]) => {
+      const c = Object.values(P).find(p => p.model === m), n = Object.values(G.result.players || {}).length ? null : null;
+      return `<span class="mono" style="display:inline-block;margin:6px 10px;font-size:20px;padding:4px 12px;border-radius:10px;border:2px solid ${c ? c.color : '#fff4'}">${esc(m)}</span>`;
+    }).join('') + '</div>' +
+    `<div class="abs" style="left:0;right:0;top:760px;text-align:center;font:500 22px 'Noto Sans KR';opacity:${ease((t - 34.8) / 0.5) * .75}">${tr(`${esc(G.run)} 기준 · 응답 시간은 CLI 실측`, `from ${esc(G.run)} · response times measured via the CLIs`)}</div>`;
+}
+
+window.seek(0);
+if (!Q.get('render')) {
+  let t0 = null; const speed = +(Q.get('speed') || 1), from = +(Q.get('t') || 0);
+  const loop = ts => { if (t0 === null) t0 = ts; window.seek(from + (ts - t0) / 1000 * speed); requestAnimationFrame(loop); };
+  requestAnimationFrame(loop);
+}
+})();
+</script>
+</body>
+</html>

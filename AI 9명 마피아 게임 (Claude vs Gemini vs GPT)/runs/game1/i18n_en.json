@@ -1,0 +1,248 @@
+{
+ "2": {
+  "inner": "It's the first night, so it'd be easiest to quietly take out Owl first, who looks quick on the uptake."
+ },
+ "3": {
+  "inner": "It's the first day and there's no info, so I'll pick Bear almost at random and bet that Bear might be the Detective or the Doctor."
+ },
+ "4": {
+  "inner": "There's no info at all on the first night, so protecting myself first is the best move, I guess."
+ },
+ "5": {
+  "inner": "Hmm, there are no clues on the first day, so I'll investigate Fox first to set a baseline for my judgment."
+ },
+ "8": {
+  "text": "Hmm hmm, it's the first day, so we've got no clues. Detective, don't step forward yet. Let's each say a word about why they might have gone after Bear, hoo~",
+  "inner": "With no info, I need to watch how people talk and mark anyone who pushes too hard."
+ },
+ "9": {
+  "text": "Ugh, Bear gone on the very first day, that's kind of anticlimactic. Was it just a random pick with no real reason? Anyone feeling a little suspicious right now?",
+  "inner": "I picked Owl, so Fox must have gone after Bear. For now I'll blend in naturally like a regular Citizen."
+ },
+ "10": {
+  "text": "Oh dear, maybe Bear was just a gut-feeling pick on the first day? We don't know anything yet, so let's all speak up and not hide anything!",
+  "inner": "It's the first day, so the Mafia will try to stay quiet and blend in. I need to watch how everyone reacts and think about who to protect tonight."
+ },
+ "11": {
+  "text": "Roar, I'm the Detective. I investigated Fox last night and they came up Mafia. Let's catch Fox today. Doctor, please protect me tonight.",
+  "inner": "Let's catch the confirmed Mafia first, and watch whether anyone defends Fox or tries to shift the vote."
+ },
+ "12": {
+  "text": "Wait, declaring Fox as Mafia on the first day is way too fast. Before we pile on just because Lion said so, let's hear Fox out and first see why Lion picked Fox.",
+  "inner": "Lion might really be the Detective, but I'm a Citizen, so I need to be careful that taking sides too early doesn't end up helping the Mafia."
+ },
+ "13": {
+  "text": "Oh my, how unfair! I'm a Citizen, and Lion steps up as Detective on the first day and picks me? That's really suspicious! If Lion's the real Detective, then any other Detective should come out, otherwise Lion could be fake!",
+  "inner": "Lion is a real Detective and dangerous, so I'll deflect suspicion by calling Lion fake and be careful not to get tied to Otter."
+ },
+ "14": {
+  "text": "Meow? A Detective showed up right on the first day! If there's another real Detective, they should counterclaim right now so it doesn't get confusing and we can decide whether to trust Fox or Lion, meow!",
+  "inner": "I can't tell if Lion is a real Detective or a Mafia gamble, so first I'll probe whether a counterclaim comes out."
+ },
+ "15": {
+  "text": "I can't trust what Lion says or what Fox says yet. But Fox is already jumping up and down saying it's unfair, hop? I'm wondering why Lion revealed the investigation result right away on the first day.",
+  "inner": "It'd be nice if Lion is the real Detective, but a fake Detective might have stepped up to shake up the game, so I'll keep watching for now."
+ },
+ "16": {
+  "text": "Hmm hmm, nobody's counterclaiming as Detective, I see. Then shouldn't we trust Lion today and go for Fox, hoo~ If Lion was fake, the real Detective can come out tomorrow and catch them.",
+  "inner": "With no counterclaim, Lion is likely the real Detective, and I should also keep an eye on Raccoon, who cut down Lion while covering for Fox."
+ },
+ "17": {
+  "text": "No counterclaim came out, so why hesitate more, meow! I'm trusting Lion and voting Fox today, and Raccoon, you were covering for Fox, so tell us why, meow!",
+  "inner": "Since there's no counterclaim, Lion is probably the real Detective and Fox is probably Mafia, and I should wonder whether Raccoon, who covered for Fox, is an accomplice."
+ },
+ "18": {
+  "text": "Oh dear, since no counterclaim came out, isn't it pretty likely Lion is right? For today let's send Fox off and watch how the others react too!",
+  "inner": "If Lion's the real Detective, I absolutely have to protect Lion tonight, but it could be a trap, so I should watch how the rest of the survivors react."
+ },
+ "19": {
+  "text": "I wasn't taking Lion's side, I was wary of a hasty pile-on. There's no counterclaim and Lion hit Fox, so let's go with Fox today, but Lion, you have to bring your investigation result tomorrow too.",
+  "inner": "If Fox is Mafia then Lion is right, but Lion could be a fake Detective, so I should keep watching Lion even after Fox is executed."
+ },
+ "20": {
+  "text": "I'm on board with trusting Lion and sending Fox off too, but Lion, could you explain in a bit more detail one more time why you picked Fox specifically? Hop!",
+  "inner": "If Lion's the real Detective, sending Fox is right, but if a fake Detective is shaking up the game, the Citizens get dragged along, so I want to hear more reasoning before the vote."
+ },
+ "21": {
+  "text": "Oh my, everyone's piling on because there's no counterclaim, but why would a Detective come out on the first day anyway? Let's ask Lion first: why me last night, of all people? And if I go, you have to verify Lion's result tomorrow!",
+  "inner": "Lion is the real Detective so Fox is about to be executed; I'll keep shifting suspicion onto Lion to the very end and not get tied to Otter."
+ },
+ "22": {
+  "text": "Ugh, since no counterclaim came out, I guess Lion's right. I'll throw my vote at Fox today too, but Lion, make sure you bring your result tomorrow!",
+  "inner": "Fox got caught on the very first day, and defending too hard would put me in danger too, so I'll cleanly cut my losses and blend in as a Citizen."
+ },
+ "23": {
+  "text": "Roar, my first investigation had no clues so I picked Fox, and Mafia came up, so I revealed it right away. Let's gather the votes on Fox today. Doctor, protect me tonight.",
+  "inner": "I'll remember Raccoon's early defense and Rabbit's repeated questions, but today I'll focus on executing Fox, the confirmed Mafia."
+ },
+ "24": {
+  "inner": "Sorry, but Fox is already done for, so I'll cleanly cut my losses and blend in with the Citizens so no one suspects me.",
+  "reason": "Ugh, since no counterclaim came out, it seems like Lion is right, so I'll throw my vote at Fox for now."
+ },
+ "25": {
+  "inner": "I'll execute Fox, the confirmed Mafia, first, and at night I'll look for the remaining Mafia based on today's reactions.",
+  "reason": "Roar, I'm voting for Fox, who I investigated myself last night and confirmed as Mafia."
+ },
+ "26": {
+  "inner": "There's a slim chance Bear might have been the Detective, but for today I'll execute Fox and carefully decide at night whether to protect Lion.",
+  "reason": "Oh dear, no counterclaim came out, so I think today we should trust Lion and send Fox off!"
+ },
+ "27": {
+  "inner": "If Fox is executed, Lion becomes even more likely to be the real Detective, so tomorrow I'll focus on Raccoon, who covered for Fox at first.",
+  "reason": "Hmm hmm, since a counter-Detective never came out, I'll cast my vote for Fox, trusting Lion's investigation result, hoo~"
+ },
+ "28": {
+  "inner": "Lion might be the real Detective, but even after Fox is sent off, I should stay wary of Lion's next investigation result.",
+  "reason": "There was no counterclaim to Lion's Detective claim and the result was specific, so let's execute Fox today and verify Lion tomorrow too."
+ },
+ "29": {
+  "inner": "Today I'll definitely execute Fox, and tomorrow I'll dig hard into Raccoon, who tried to cover for Fox early on.",
+  "reason": "Since no counterclaim came out to the very end, Lion is the real Detective and Fox is definitely Mafia, so I'm picking Fox, meow!"
+ },
+ "30": {
+  "inner": "I'm being piled on, but I'll keep shifting suspicion onto Lion to the very end and not get tied to my partner Otter.",
+  "reason": "Stepping up as Detective on the very first day was way too hasty and suspicious, so I'll vote for Lion."
+ },
+ "31": {
+  "inner": "I feel uneasy because Lion might be a fake Detective, but the votes are gathering on Fox today, and if I'm the only one who stays out I'd get dragged in, so I'll go along.",
+  "reason": "Lion revealed an investigation result and no counterclaim came out, so for now I'll trust Lion and vote for Fox, hop!"
+ },
+ "34": {
+  "inner": "The Doctor will obviously protect Lion tonight, so I shouldn't waste a shot; I'll definitely take out Owl, who's trying to calmly sort out the game."
+ },
+ "35": {
+  "inner": "No counterclaim came out, so Lion is likely the real Detective, and I have to protect Lion tonight, if only to hear tomorrow's investigation result."
+ },
+ "36": {
+  "inner": "Roar, let's investigate Raccoon, who covered for Fox first, and find out whether they're a careful Citizen or the last Mafia."
+ },
+ "39": {
+  "text": "Nyaa! Lion survived, so tell us fast who you investigated last night and what came up, nyaa! Did you maybe pick Raccoon, the one who was covering for Fox yesterday?",
+  "inner": "Lion's still alive, so the Doctor probably protected Lion and Mafia went after Owl instead. I need to hear Lion's investigation result from last night first."
+ },
+ "40": {
+  "text": "Ugh, such a shame Owl's gone. First things first, Lion, tell us fast who you investigated last night - did you check Raccoon, like Cat said?",
+  "inner": "Please let Lion have investigated Raccoon last night and not me. I'll just wait and see Lion's result first."
+ },
+ "41": {
+  "text": "Hop hop, Owl's gone too... Lion, tell us clearly who you investigated last night, along with the result. And don't just brush past the question about whether you checked Raccoon!",
+  "inner": "If Lion's really the Detective, they'll state the result clearly now, and if they're fake they'll get vague, so I need to ask for specifics and check."
+ },
+ "42": {
+  "text": "Roar, I investigated Raccoon last night and they're not Mafia. The last one is among Otter, Penguin, Cat and Rabbit, so everyone tell me who you suspect and why.",
+  "inner": "Raccoon is ruled out, so I'll compare how the other four suspect each other, their reasons and reactions, to narrow down the last Mafia."
+ },
+ "43": {
+  "text": "Lion's result says I'm clear, so at least I wasn't backing Fox as a Mafia. Killing Owl could be meant to shut Lion up, so the remaining candidates, tell us who each of you suspect.",
+  "inner": "It's a relief that Lion called me a Citizen, but it's too early to assume Lion is the real Detective. Owl's death could be a Mafia move to build up Lion's credibility."
+ },
+ "44": {
+  "text": "Oh dear, Lion's safe and Raccoon's innocent too, what a relief! So it looks like it's down to Otter, Cat and Rabbit now. What do you think about Rabbit, who was so wary of Lion yesterday?",
+  "inner": "If Lion's the real Detective, the last Mafia is among Otter, Cat and Rabbit, so I'll hide who I am and test their reactions."
+ },
+ "45": {
+  "text": "Roar, it bugs me that Rabbit kept repeating the same question, but let's not go after them for that alone. Otter and Cat, who do you suspect, and tell me why too.",
+  "inner": "I shouldn't jump on Penguin's pick of Rabbit right away. I'll compare what Otter and Cat base their judgments on too."
+ },
+ "46": {
+  "text": "Nyaa! Penguin slipped themselves out and is only going after the three of us? Otter, who piled on the vote against Fox last of all yesterday, and Penguin, you're both suspicious, nyaa!",
+  "inner": "Raccoon turned out to be a Citizen, so I'm a Citizen too, and the last Mafia is probably Penguin, who left only themselves off the suspect list, or Otter, who was just watching the mood yesterday."
+ },
+ "47": {
+  "text": "Ugh, I only spoke late yesterday because I was watching in case a Detective showdown came up, and that's unfair. If anything, like Cat said, Penguin, who slipped themselves off the candidates, bugs me the most.",
+  "inner": "Cat pointed at me, so I'll brush it off like I'm wronged and turn the arrows toward Penguin, who slipped themselves out."
+ },
+ "48": {
+  "text": "Penguin agreed to Fox's execution yesterday and now only singles out Rabbit today. Otter and Cat are pushing each other too, but I want to hear properly from Penguin first about who they suspect and why.",
+  "inner": "I'm grateful Lion called me innocent, but I can't trust that yet. Penguin's attitude, narrowing down the candidates and then stepping out, bothers me the most right now."
+ },
+ "49": {
+  "text": "Oh dear, I left myself out without thinking because I'm innocent, and now I'm getting cornered! Rabbit, who kept shooting suspicious glares at Lion yesterday right to the end, is the most suspicious.",
+  "inner": "If I reveal I'm the Doctor now, I'll get targeted at night, so I'll hide who I am for now and watch Rabbit and Cat's reactions more."
+ },
+ "50": {
+  "text": "Penguin, you're only picking me, but you were the first to agree when we went after Fox yesterday, hop hop! I'm wronged here too, so give me your reasons first!",
+  "inner": "It's suspicious that Penguin only picks me, but if I push hard it'll backfire, so I'll hit back by demanding their reasons."
+ },
+ "51": {
+  "inner": "Suspicion has landed nicely on Penguin, so I'll naturally push Penguin and get through today safely.",
+  "reason": "Ugh, leaving themselves off the candidates and keeping on at Rabbit alone is the most suspicious, so I'm throwing my vote to Penguin."
+ },
+ "52": {
+  "inner": "Raccoon was ruled out by my investigation and I've got no hard proof among the remaining four, but Penguin, who after being suspected added no reasoning and stuck with Rabbit alone, gets my vote.",
+  "reason": "Roar, Penguin held onto Rabbit's repeated question alone, didn't compare the other candidates' behavior, and pushed for Rabbit's execution, so they're the most suspicious."
+ },
+ "53": {
+  "inner": "Everyone seems to suspect me and I'm anxious, but I'll hide that I'm the Doctor to the end and stay consistent by voting Rabbit.",
+  "reason": "Oh dear, Rabbit's attitude, shooting suspicious glares at Lion right up until Fox's execution yesterday, still bothers me the most, so I'm voting Rabbit!"
+ },
+ "54": {
+  "inner": "If Lion's the real Detective, Penguin looks the most likely to be Mafia.",
+  "reason": "Penguin kept pointing only at Rabbit today, left themselves off the candidates, and didn't give proper grounds for why they suspect Rabbit."
+ },
+ "55": {
+  "inner": "Lion's still alive, so today I'll send off the most suspicious one, Penguin, first, and if the game doesn't end, Lion will investigate Otter or Rabbit at night.",
+  "reason": "Nyaa! Penguin, who slipped themselves off the suspects and turned the arrows onto Rabbit, is the most suspicious, nyaa!"
+ },
+ "56": {
+  "inner": "It feels like Penguin is making me a scapegoat to hide a Mafia partner, so today I'm picking Penguin, hop hop!",
+  "reason": "Grouping Otter, Cat and Rabbit as candidates while leaving themselves out, and going after only me so persistently, is suspicious."
+ },
+ "59": {
+  "inner": "I'm betting that the Doctor is already dead or the attention got turned away, and I have to cut Lion off now before they reveal more investigation results if I want a chance of winning."
+ },
+ "60": {
+  "inner": "Roar, executing Penguin didn't end the game, so I'll investigate Cat, who had shifted the candidates to Penguin and Otter, to narrow down the last Mafia."
+ },
+ "63": {
+  "text": "Cat, yesterday you kept pushing on whether Raccoon was checked, and now you've moved on to talking about Penguin. Lion's result says Raccoon is clean, so why aren't you talking about that anymore, hop hop?",
+  "inner": "The last Mafia must be Otter or Cat, and Cat, who kept hammering Raccoon, is more suspicious."
+ },
+ "64": {
+  "text": "Ugh, Lion's gone in the end too. Hearing Rabbit, it bugs me a bit that Cat, you suspected Raccoon yesterday and then suddenly swung it over to me and Penguin. What do you think?",
+  "inner": "Today we only send off one of Cat or Rabbit and it's over, so while Rabbit is biting at Cat, I'll naturally stir the wind toward Cat."
+ },
+ "65": {
+  "text": "It bugs me that Cat first went after me and then turned to Penguin, but it's too early to call them Mafia for that. Let's hear how each of you, Otter included, saw the vanished Lion and Penguin, and then vote, ugh.",
+  "inner": "Lion's result says I'm innocent, but I still don't know if Lion was the real Detective. Cat and Otter are trading suspicion, so I need to watch how their votes flow."
+ },
+ "66": {
+  "text": "Nyaa! Lion revealed Raccoon is a Citizen, so why would I keep suspecting them, nyaa! One of Otter and Rabbit, who are picking at my words and pushing me as a pair, is exactly the last Mafia, nyaa!",
+  "inner": "Raccoon is confirmed and I'm a Citizen, so one of Rabbit and Otter, who are ganging up on me, is definitely the last Mafia."
+ },
+ "67": {
+  "text": "Cat, you're lumping me and Otter together and calling us a pair, hop hop! You're the one who kept hammering Raccoon and then swung over to Penguin, so I'm going to look at the evidence on Cat first!",
+  "inner": "The last Mafia is Otter or Cat, and Cat, who hammered Raccoon to the end and is tying the two of us together, is more suspicious, so today I have to push Cat."
+ },
+ "68": {
+  "text": "Ugh, I'm sorry too that sending Penguin off yesterday was a wrong guess on my part. But Cat, you lump me and Rabbit together the moment you're at a disadvantage, and that's really suspicious, so I'm picking Cat today.",
+  "inner": "Rabbit's already fixed on Cat, so if I nail it down on Cat too, I can pull in Raccoon's vote and finish this today."
+ },
+ "69": {
+  "text": "Cat dropped the Raccoon talk because Lion's result came out. Cat, lumping Otter and Rabbit together, is the most suspicious right now, so I'm picking Cat.",
+  "inner": "Lion is quite likely the real Detective, and Cat switching targets and pushing both sides bothers me the most."
+ },
+ "70": {
+  "text": "Nyaa! Raccoon, I'm telling you I'm a Citizen! Otter, who's been riding on my words since Day 1, is the real Mafia, please pick Otter, nyaa!",
+  "inner": "If even Raccoon suspects me, the Citizens lose, so I have to point at Otter, who hitched onto my words yesterday to push Penguin and today is riding on Rabbit's words, and win Raccoon over."
+ },
+ "71": {
+  "inner": "Raccoon has come over to Cat's side too, so I'll make sure Cat gets executed today and finish the game tonight.",
+  "reason": "Ugh, Cat, who lumps me and Rabbit together with no evidence the moment they're at a disadvantage, is the most suspicious, so I'm picking them."
+ },
+ "72": {
+  "inner": "Cat looks like the most likely Mafia. Let's make sure we execute them today.",
+  "reason": "Even after the Lion's result confirmed Raccoon's innocence, Cat is still trying to swing the votes by pinning Otter and Rabbit as Mafia together, so Cat is the most suspicious."
+ },
+ "73": {
+  "inner": "If I die here, the Mafia might win, so I'll keep voting for Otter to the end and try for even a slim chance of a tie.",
+  "reason": "Otter is the real remaining Mafia, nya! Since day one, Otter has been quietly riding on what others say and going after Penguin and then me, one after the other."
+ },
+ "74": {
+  "inner": "The remaining Mafia has to be Otter or Cat, and the way Cat ties the two of us together is way too calculated, so I have to push for Cat today.",
+  "reason": "Cat kept hammering on Raccoon until the end, then turned it toward Penguin, and even now Cat is lumping Otter and me together, so hop, Cat is the most suspicious."
+ },
+ "77": {
+  "inner": "Raccoon is a confirmed Citizen, but the remaining Doctor might still protect them, so let's take out Rabbit for sure and end the game tonight."
+ }
+}

@@ -5,9 +5,10 @@ If you have any questions or feedback, please email subbak2@gmail.com
 <hr/>
 
 ## 최신 영상
-[클로드한테 집 PC 맡겨서 낮 영상을 밤으로 (ComfyUI)](https://github.com/subbak2/SubCoding/tree/main/%ED%81%B4%EB%A1%9C%EB%93%9C%ED%95%9C%ED%85%8C%20%EC%A7%91%20PC%20%EB%A7%A1%EA%B2%A8%EC%84%9C%20%EB%82%AE%20%EC%98%81%EC%83%81%EC%9D%84%20%EB%B0%A4%EC%9C%BC%EB%A1%9C%20%28ComfyUI%29)
+[AI 9명 마피아 게임 (Claude vs Gemini vs GPT)](https://github.com/subbak2/SubCoding/tree/main/AI%209%EB%AA%85%20%EB%A7%88%ED%94%BC%EC%95%84%20%EA%B2%8C%EC%9E%84%20%28Claude%20vs%20Gemini%20vs%20GPT%29)
 
 ### 이전 영상
+[클로드한테 집 PC 맡겨서 낮 영상을 밤으로 (ComfyUI)](https://github.com/subbak2/SubCoding/tree/main/%ED%81%B4%EB%A1%9C%EB%93%9C%ED%95%9C%ED%85%8C%20%EC%A7%91%20PC%20%EB%A7%A1%EA%B2%A8%EC%84%9C%20%EB%82%AE%20%EC%98%81%EC%83%81%EC%9D%84%20%EB%B0%A4%EC%9C%BC%EB%A1%9C%20%28ComfyUI%29)  
 [개발자가 자막 넣는 방법 (python)](https://github.com/subbak2/SubCoding/tree/main/%EA%B0%9C%EB%B0%9C%EC%9E%90%EA%B0%80%20%EC%9E%90%EB%A7%89%20%EB%84%A3%EB%8A%94%20%EB%B0%A9%EB%B2%95%20(python))
 
 

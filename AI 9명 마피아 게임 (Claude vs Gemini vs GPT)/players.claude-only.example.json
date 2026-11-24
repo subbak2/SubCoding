@@ -1,0 +1,17 @@
+{
+  "_comment": "One subscription is enough: 5 players, all via the claude CLI with different models/effort. 5 players = Mafia 1, Detective 1, Doctor 1, Citizen 2. The players are told everyone is a different AI; here some share a model at different effort levels.",
+  "players": [
+    {"key": "opus", "name": "Claude Opus 5.5", "character": "부엉이", "team": "Claude",
+     "cmd": ["claude", "-p", "--model", "opus", "--output-format", "text", "--tools", "", "--effort", "medium"]},
+    {"key": "sonnet", "name": "Claude Sonnet 5.5", "character": "여우", "team": "Claude",
+     "cmd": ["claude", "-p", "--model", "sonnet", "--output-format", "text", "--tools", "", "--effort", "medium"]},
+    {"key": "haiku", "name": "Claude Haiku 5.5", "character": "토끼", "team": "Claude",
+     "cmd": ["claude", "-p", "--model", "haiku", "--output-format", "text", "--tools", "", "--effort", "medium"]},
+    {"key": "sonnet-low", "name": "Claude Sonnet 5.5 (low)", "character": "고양이", "team": "Claude",
+     "color": "#E8A87C",
+     "cmd": ["claude", "-p", "--model", "sonnet", "--output-format", "text", "--tools", "", "--effort", "low"]},
+    {"key": "haiku-high", "name": "Claude Haiku 5.5 (high)", "character": "곰", "team": "Claude",
+     "color": "#B5651D",
+     "cmd": ["claude", "-p", "--model", "haiku", "--output-format", "text", "--tools", "", "--effort", "high"]}
+  ]
+}

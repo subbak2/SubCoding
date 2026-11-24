@@ -1,0 +1,2 @@
+# Only needed for viewer/mix_audio.py (voice/music mixing). The game and the viewer use the standard library only.
+numpy>=1.24
